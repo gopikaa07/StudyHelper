@@ -1,0 +1,4641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Study Helper</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .hidden {
+            display: none !important;
+        }
+
+        .dashboard-card {
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .operation-area {
+            margin-top: 30px;
+            padding: 30px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .operation-area input,
+        .operation-area select,
+        .operation-area textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin: 7px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            font-family: inherit;
+        }
+
+        .operation-area textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .operation-area button {
+            margin: 5px 5px 5px 0;
+        }
+
+        .data-card {
+            background: #fff7fa;
+            border: 1px solid #f1d5df;
+            padding: 18px;
+            border-radius: 14px;
+            margin: 15px 0;
+        }
+
+        .data-card h3 {
+            margin-top: 0;
+        }
+
+        .success-message {
+            color: #27834a;
+            background: #eefaf2;
+            border: 1px solid #bfe7cb;
+            padding: 12px;
+            border-radius: 9px;
+            margin: 15px 0;
+        }
+
+        .error-message {
+            color: #c94f6d;
+            background: #fff0f4;
+            border: 1px solid #f1c2ce;
+            padding: 12px;
+            border-radius: 9px;
+            margin: 15px 0;
+        }
+
+        .info-message {
+            color: #555;
+            background: #f7f7f7;
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 9px;
+            margin: 15px 0;
+        }
+
+        .proof-image {
+            max-width: 260px;
+            max-height: 300px;
+            display: block;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .note-image {
+            max-width: 300px;
+            max-height: 300px;
+            display: block;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: #f3e5eb;
+            font-size: 13px;
+        }
+
+        .verify-buttons {
+            margin-top: 15px;
+        }
+
+        .small-text {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .group-selector {
+            margin-bottom: 20px;
+        }
+
+        .group-selector select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 9px;
+            border: 1px solid #ddd;
+        }
+
+        .chat-box {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+
+        .chat-message {
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+
+        .chat-message strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            border: 1px solid #eadde2;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #fff0f5;
+        }
+
+        .danger-button {
+            background: #c94f6d !important;
+            color: white !important;
+        }
+
+        .success-button {
+            background: #4b9b68 !important;
+            color: white !important;
+        }
+
+        .file-help {
+            font-size: 13px;
+            color: #777;
+            margin-top: -8px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================================================= -->
+<!-- NAVIGATION -->
+<!-- ================================================= -->
+
+<nav>
+
+    <div class="logo">
+        Study Helper
+    </div>
+
+    <div class="nav-links">
+
+        <a href="#home">
+            Home
+        </a>
+
+        <a href="#features">
+            Features
+        </a>
+
+        <button onclick="showPage('studentLogin')">
+            Student Login
+        </button>
+
+        <button onclick="showPage('teacherLogin')">
+            Teacher Login
+        </button>
+
+    </div>
+
+</nav>
+
+
+<!-- ================================================= -->
+<!-- HOME -->
+<!-- ================================================= -->
+
+<section id="home" class="page home">
+
+    <div class="home-text">
+
+        <p class="tag">
+            SMART STUDY • SIMPLE LEARNING
+        </p>
+
+        <h1>
+            Study smarter.<br>
+            Learn together.
+        </h1>
+
+        <p>
+            Study Helper connects students, tutors and teachers
+            in one simple platform for better learning.
+        </p>
+
+        <div class="buttons">
+
+            <button onclick="showPage('studentLogin')">
+                Student Login
+            </button>
+
+            <button
+                class="light"
+                onclick="showPage('studentSignup')">
+                Create Account
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="home-card">
+
+        <div class="circle">
+            📚
+        </div>
+
+        <h3>
+            Study Helper
+        </h3>
+
+        <p>
+            Grades • Groups • Tutors • Notes
+        </p>
+
+    </div>
+
+</section>
+
+
+
+
+<!-- ================================================= -->
+<!-- STUDENT LOGIN -->
+<!-- ================================================= -->
+
+<section
+    id="studentLogin"
+    class="page form-page hidden">
+
+    <div class="form-card">
+
+        <button
+            class="back"
+            onclick="showPage('home')">
+            ← Back
+        </button>
+
+        <h2>
+            Student Login
+        </h2>
+
+        <p>
+            Login to access your Study Helper dashboard.
+        </p>
+
+        <form onsubmit="studentLogin(event)">
+
+            <label>
+                Student ID
+            </label>
+
+            <input
+                type="text"
+                id="loginStudentId"
+                required
+            >
+
+            <label>
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="loginStudentPassword"
+                required
+            >
+
+            <button type="submit">
+                Login
+            </button>
+
+        </form>
+
+        <p class="switch">
+
+            Don't have an account?
+
+            <button
+                type="button"
+                onclick="showPage('studentSignup')">
+                Sign Up
+            </button>
+
+        </p>
+
+        <div id="studentLoginMessage"></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================================================= -->
+<!-- STUDENT SIGNUP -->
+<!-- ================================================= -->
+
+<section
+    id="studentSignup"
+    class="page form-page hidden">
+
+    <div class="form-card">
+
+        <button
+            class="back"
+            onclick="showPage('home')">
+            ← Back
+        </button>
+
+        <h2>
+            Create Student Account
+        </h2>
+
+        <p>
+            Enter your details to create an account.
+        </p>
+
+        <form onsubmit="studentSignup(event)">
+
+            <label>
+                Student ID
+            </label>
+
+            <input
+                type="text"
+                id="signupId"
+                required
+            >
+
+            <label>
+                Student Name
+            </label>
+
+            <input
+                type="text"
+                id="signupName"
+                required
+            >
+
+            <label>
+                Class
+            </label>
+
+            <input
+                type="text"
+                id="signupClass"
+                placeholder="S3 CSE DS"
+                required
+            >
+
+            <label>
+                Department
+            </label>
+
+            <select
+                id="signupDepartment"
+                required>
+
+                <option value="CSE (Data Science)">
+                    CSE (Data Science)
+                </option>
+
+                <option value="AI&DS">
+                    AI&DS
+                </option>
+
+                <option value="CSE">
+                    CSE
+                </option>
+
+                <option value="ECE">
+                    ECE
+                </option>
+
+                <option value="MECH">
+                    MECH
+                </option>
+
+            </select>
+
+            <label>
+                Class Tutor
+            </label>
+
+            <select
+                id="signupTutor"
+                required>
+
+                <option value="">
+                    Select Tutor
+                </option>
+
+                <option value="T001">
+                    Dr Amrutha Muralidharan Nair
+                </option>
+
+                <option value="T002">
+                    Reshma R
+                </option>
+
+                <option value="T003">
+                    Siji Jose
+                </option>
+
+            </select>
+
+            <label>
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="signupPassword"
+                required
+            >
+
+            <button type="submit">
+                Create Account
+            </button>
+
+        </form>
+
+        <div id="signupMessage"></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================================================= -->
+<!-- TEACHER LOGIN -->
+<!-- ================================================= -->
+
+<section
+    id="teacherLogin"
+    class="page form-page hidden">
+
+    <div class="form-card">
+
+        <button
+            class="back"
+            onclick="showPage('home')">
+            ← Back
+        </button>
+
+        <h2>
+            Teacher Login
+        </h2>
+
+        <p>
+            Login to verify student marks.
+        </p>
+
+        <form onsubmit="teacherLogin(event)">
+
+            <label>
+                Teacher ID
+            </label>
+
+            <input
+                type="text"
+                id="teacherId"
+                required
+            >
+
+            <label>
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="teacherPassword"
+                required
+            >
+
+            <button type="submit">
+                Login
+            </button>
+
+        </form>
+
+        <div id="teacherLoginMessage"></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================================================= -->
+<!-- STUDENT DASHBOARD -->
+<!-- ================================================= -->
+
+<section
+    id="studentDashboard"
+    class="page dashboard hidden">
+
+    <div class="dashboard-top">
+
+        <div>
+
+            <h2>
+                Student Dashboard
+            </h2>
+
+            <p id="studentWelcome">
+                Welcome!
+            </p>
+
+        </div>
+
+        <button onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+
+    <div class="cards">
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('enterMark')">
+
+            <h3>
+                1. Enter Mark
+            </h3>
+
+            <p>
+                Submit your latest subject mark and proof.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('grades')">
+
+            <h3>
+                2. My Grades
+            </h3>
+
+            <p>
+                View your submitted and verified grades.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('groups')">
+
+            <h3>
+                3. My Groups
+            </h3>
+
+            <p>
+                View automatically assigned study groups.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('chat')">
+
+            <h3>
+                4. Group Chat
+            </h3>
+
+            <p>
+                Chat with your group members.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('notes')">
+
+            <h3>
+                5. Notes
+            </h3>
+
+            <p>
+                Upload and view JPG/JPEG study notes.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('schedule')">
+
+            <h3>
+                6. Schedule
+            </h3>
+
+            <p>
+                View or add group schedules.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('classTutor')">
+
+            <h3>
+                7. Class Tutor
+            </h3>
+
+            <p>
+                View your class tutor information.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('findTutor')">
+
+            <h3>
+                8. Find a Tutor
+            </h3>
+
+            <p>
+                Request help from an S-grade student.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('tutorRequests')">
+
+            <h3>
+                9. Tutor Requests
+            </h3>
+
+            <p>
+                View tutor requests and their status.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('leaveGroup')">
+
+            <h3>
+                10. Leave Group
+            </h3>
+
+            <p>
+                Leave your current study group.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('review')">
+
+            <h3>
+                11. Anonymous Review
+            </h3>
+
+            <p>
+                Submit an anonymous review.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('report')">
+
+            <h3>
+                12. Report Member
+            </h3>
+
+            <p>
+                Report a group member to the teacher.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openOperation('notifications')">
+
+            <h3>
+                13. Notifications
+            </h3>
+
+            <p>
+                View your latest notifications.
+            </p>
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="operationArea"
+        class="operation-area hidden">
+
+        <button
+            class="back"
+            onclick="closeOperation()">
+            ← Back to Dashboard
+        </button>
+
+        <h2 id="operationTitle">
+            Study Helper
+        </h2>
+
+        <div id="operationContent">
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================================================= -->
+<!-- TEACHER DASHBOARD -->
+<!-- ================================================= -->
+
+<section
+    id="teacherDashboard"
+    class="page dashboard hidden">
+
+    <div class="dashboard-top">
+
+        <div>
+
+            <h2>
+                Teacher Dashboard
+            </h2>
+
+            <p id="teacherWelcome">
+                Verify student marks and manage reports.
+            </p>
+
+        </div>
+
+        <button onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+
+    <div class="cards">
+
+        <button
+            class="card dashboard-card"
+            onclick="openTeacherOperation('marks')">
+
+            <h3>
+                Verify Marks
+            </h3>
+
+            <p>
+                Check student marks and uploaded proof.
+            </p>
+
+        </button>
+
+
+        <button
+            class="card dashboard-card"
+            onclick="openTeacherOperation('reports')">
+
+            <h3>
+                Student Reports
+            </h3>
+
+            <p>
+                Review reported group members.
+            </p>
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="teacherOperationArea"
+        class="operation-area hidden">
+
+        <button
+            class="back"
+            onclick="closeTeacherOperation()">
+            ← Back to Dashboard
+        </button>
+
+        <h2 id="teacherOperationTitle">
+            Teacher
+        </h2>
+
+        <div id="teacherOperationContent">
+        </div>
+
+    </div>
+
+</section>
+
+
+<footer>
+    Study Helper © 2026
+</footer>
+
+
+<script>
+
+/* ================================================= */
+/* GLOBAL VARIABLES */
+/* ================================================= */
+
+let currentStudentId = "";
+let currentStudentName = "";
+
+let currentTeacherId = "";
+let currentTeacherName = "";
+
+let currentGroups = [];
+let currentGroupId = 0;
+
+
+/* ================================================= */
+/* PAGE CONTROL */
+/* ================================================= */
+
+function showPage(id) {
+
+    document
+        .querySelectorAll(".page")
+        .forEach(page => {
+            page.classList.add("hidden");
+        });
+
+    const page = document.getElementById(id);
+
+    if (page) {
+        page.classList.remove("hidden");
+    }
+
+    window.scrollTo(0, 0);
+}
+
+
+/* ================================================= */
+/* HTML ESCAPE */
+/* ================================================= */
+
+function escapeHTML(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* ================================================= */
+/* JAVA RESPONSE DECODER */
+/* ================================================= */
+
+function decodeJava(value) {
+
+    if (!value) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/\\p/g, "|")
+        .replace(/\\\\/g, "\\");
+}
+
+
+/* ================================================= */
+/* STUDENT LOGIN */
+/* ================================================= */
+
+async function studentLogin(event) {
+
+    event.preventDefault();
+
+    const id =
+        document.getElementById("loginStudentId").value.trim();
+
+    const password =
+        document.getElementById("loginStudentPassword").value;
+
+    const message =
+        document.getElementById("studentLoginMessage");
+
+    try {
+
+        const response =
+            await fetch("/api/student-login", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+
+                body:
+                    new URLSearchParams({
+                        studentId: id,
+                        password: password
+                    })
+
+            });
+
+        const result =
+            await response.text();
+
+        const parts =
+            result.split("|");
+
+        if (
+            response.ok &&
+            parts[0] === "SUCCESS"
+        ) {
+
+            currentStudentId = id;
+            currentStudentName = parts[1] || "";
+
+            document.getElementById(
+                "studentWelcome"
+            ).innerText =
+                "Welcome " + currentStudentName;
+
+            message.innerHTML = "";
+
+            showPage("studentDashboard");
+
+        } else {
+
+            message.innerHTML =
+                "<div class='error-message'>" +
+                escapeHTML(
+                    parts[1] || "Login failed."
+                ) +
+                "</div>";
+
+        }
+
+    } catch (error) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Could not connect to Java server." +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* STUDENT SIGNUP */
+/* ================================================= */
+
+async function studentSignup(event) {
+
+    event.preventDefault();
+
+    const message =
+        document.getElementById("signupMessage");
+
+    const data = {
+
+        studentId:
+            document.getElementById("signupId").value.trim(),
+
+        studentName:
+            document.getElementById("signupName").value.trim(),
+
+        className:
+            document.getElementById("signupClass").value.trim(),
+
+        department:
+            document.getElementById("signupDepartment").value,
+
+        tutorId:
+            document.getElementById("signupTutor").value,
+
+        password:
+            document.getElementById("signupPassword").value
+
+    };
+
+    try {
+
+        const response =
+            await fetch("/api/student-signup", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+
+                body:
+                    new URLSearchParams(data)
+
+            });
+
+        const result =
+            await response.text();
+
+        const parts =
+            result.split("|");
+
+        if (
+            response.ok &&
+            parts[0] === "SUCCESS"
+        ) {
+
+            message.innerHTML =
+                "<div class='success-message'>" +
+                escapeHTML(
+                    parts[1] ||
+                    "Account created successfully."
+                ) +
+                "</div>";
+
+            event.target.reset();
+
+            document.getElementById(
+                "signupDepartment"
+            ).value =
+                "CSE (Data Science)";
+
+        } else {
+
+            message.innerHTML =
+                "<div class='error-message'>" +
+                escapeHTML(
+                    parts[1] ||
+                    "Could not create account."
+                ) +
+                "</div>";
+
+        }
+
+    } catch (error) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Could not connect to Java server." +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* TEACHER LOGIN */
+/* ================================================= */
+
+async function teacherLogin(event) {
+
+    event.preventDefault();
+
+    const id =
+        document.getElementById("teacherId").value.trim();
+
+    const password =
+        document.getElementById("teacherPassword").value;
+
+    const message =
+        document.getElementById("teacherLoginMessage");
+
+    try {
+
+        const response =
+            await fetch("/api/teacher-login", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+
+                body:
+                    new URLSearchParams({
+                        teacherId: id,
+                        password: password
+                    })
+
+            });
+
+        const result =
+            await response.text();
+
+        const parts =
+            result.split("|");
+
+        if (
+            response.ok &&
+            parts[0] === "SUCCESS"
+        ) {
+
+            currentTeacherId = id;
+            currentTeacherName = parts[1] || "";
+
+            document.getElementById(
+                "teacherWelcome"
+            ).innerText =
+                "Teacher: " + currentTeacherName;
+
+            message.innerHTML = "";
+
+            showPage("teacherDashboard");
+
+        } else {
+
+            message.innerHTML =
+                "<div class='error-message'>" +
+                escapeHTML(
+                    parts[1] ||
+                    "Login failed."
+                ) +
+                "</div>";
+
+        }
+
+    } catch (error) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Could not connect to Java server." +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* GENERIC STUDENT REQUEST */
+/* ================================================= */
+
+async function studentRequest(
+    action,
+    extra = {},
+    method = "GET"
+) {
+
+    const data = {
+        studentId: currentStudentId,
+        action: action,
+        ...extra
+    };
+
+    let url =
+        "/api/student-operation";
+
+    let options = {
+        method: method
+    };
+
+    if (method === "GET") {
+
+        url +=
+            "?" +
+            new URLSearchParams(data).toString();
+
+    } else {
+
+        options.headers = {
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+        };
+
+        options.body =
+            new URLSearchParams(data);
+
+    }
+
+    const response =
+        await fetch(url, options);
+
+    const text =
+        await response.text();
+
+    return {
+        response: response,
+        text: text
+    };
+
+}
+
+
+/* ================================================= */
+/* GENERIC TEACHER REQUEST */
+/* ================================================= */
+
+async function teacherRequest(
+    action,
+    extra = {},
+    method = "GET"
+) {
+
+    const data = {
+
+        teacherId:
+            currentTeacherId,
+
+        action:
+            action,
+
+        ...extra
+
+    };
+
+    let url =
+        "/api/teacher-operation";
+
+    let options = {
+        method: method
+    };
+
+    if (method === "GET") {
+
+        url +=
+            "?" +
+            new URLSearchParams(data).toString();
+
+    } else {
+
+        options.headers = {
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+        };
+
+        options.body =
+            new URLSearchParams(data);
+
+    }
+
+    const response =
+        await fetch(url, options);
+
+    const text =
+        await response.text();
+
+    return {
+        response: response,
+        text: text
+    };
+
+}
+
+
+/* ================================================= */
+/* OPEN STUDENT OPERATION */
+/* ================================================= */
+
+function openOperation(operation) {
+
+    const area =
+        document.getElementById(
+            "operationArea"
+        );
+
+    area.classList.remove("hidden");
+
+    const title =
+        document.getElementById(
+            "operationTitle"
+        );
+
+    const content =
+        document.getElementById(
+            "operationContent"
+        );
+
+    if (operation === "enterMark") {
+
+        renderEnterMark(
+            title,
+            content
+        );
+
+    }
+
+    else if (operation === "grades") {
+
+        title.innerText =
+            "My Grades";
+
+        loadGrades(content);
+
+    }
+
+    else if (operation === "groups") {
+
+        title.innerText =
+            "My Groups";
+
+        loadGroups(content);
+
+    }
+
+    else if (operation === "chat") {
+
+        title.innerText =
+            "Group Chat";
+
+        loadChat(content);
+
+    }
+
+    else if (operation === "notes") {
+
+        title.innerText =
+            "Notes";
+
+        loadNotes(content);
+
+    }
+
+    else if (operation === "schedule") {
+
+        title.innerText =
+            "Schedule";
+
+        loadSchedule(content);
+
+    }
+
+    else if (operation === "classTutor") {
+
+        title.innerText =
+            "Class Tutor";
+
+        loadClassTutor(content);
+
+    }
+
+    else if (operation === "findTutor") {
+
+        title.innerText =
+            "Find a Tutor";
+
+        loadFindTutor(content);
+
+    }
+
+    else if (operation === "tutorRequests") {
+
+        title.innerText =
+            "Tutor Requests";
+
+        loadTutorRequests(content);
+
+    }
+
+    else if (operation === "leaveGroup") {
+
+        title.innerText =
+            "Leave Group";
+
+        loadLeaveGroup(content);
+
+    }
+
+    else if (operation === "review") {
+
+        title.innerText =
+            "Anonymous Review";
+
+        renderReview(content);
+
+    }
+
+    else if (operation === "report") {
+
+        title.innerText =
+            "Report Group Member";
+
+        renderReport(content);
+
+    }
+
+    else if (operation === "notifications") {
+
+        title.innerText =
+            "Notifications";
+
+        loadNotifications(content);
+
+    }
+
+}
+
+
+/* ================================================= */
+/* ENTER MARK */
+/* ================================================= */
+
+function renderEnterMark(title, content) {
+
+    title.innerText =
+        "Enter Subject Mark";
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            <h3>
+                Submit Latest Mark
+            </h3>
+
+            <label>
+                Subject
+            </label>
+
+            <select id="markSubject">
+
+                <option value="GAEST305">
+                    DEL - GAEST305
+                </option>
+
+                <option value="GAMAT301">
+                    Mathematics - GAMAT301
+                </option>
+
+            </select>
+
+
+            <label>
+                Series 1 / Latest Mark (%)
+            </label>
+
+            <input
+                type="number"
+                id="markValue"
+                min="0"
+                max="100"
+                placeholder="Enter mark from 0 to 100"
+            >
+
+
+            <label>
+                Proof Image
+            </label>
+
+            <input
+                type="file"
+                id="markProofFile"
+                accept=".jpg,.jpeg,image/jpeg"
+            >
+
+            <p class="file-help">
+                Only JPG/JPEG images are allowed. Maximum size: 2 MB.
+            </p>
+
+
+            <button
+                onclick="submitMark()">
+                Submit Mark
+            </button>
+
+
+            <div id="markMessage"></div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ================================================= */
+/* SUBMIT MARK WITH IMAGE */
+/* ================================================= */
+
+async function submitMark() {
+
+    const subjectCode =
+        document.getElementById(
+            "markSubject"
+        ).value;
+
+    const mark =
+        document.getElementById(
+            "markValue"
+        ).value;
+
+    const file =
+        document.getElementById(
+            "markProofFile"
+        ).files[0];
+
+    const message =
+        document.getElementById(
+            "markMessage"
+        );
+
+
+    if (
+        mark === "" ||
+        Number(mark) < 0 ||
+        Number(mark) > 100
+    ) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Please enter a mark between 0 and 100." +
+            "</div>";
+
+        return;
+    }
+
+
+    if (!file) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Please upload your proof image." +
+            "</div>";
+
+        return;
+    }
+
+
+    const fileName =
+        file.name.toLowerCase();
+
+
+    if (
+        !fileName.endsWith(".jpg") &&
+        !fileName.endsWith(".jpeg")
+    ) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Only JPG/JPEG images are allowed." +
+            "</div>";
+
+        return;
+    }
+
+
+    if (file.size > 2 * 1024 * 1024) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "File is too large. Maximum size is 2 MB." +
+            "</div>";
+
+        return;
+    }
+
+
+    if (
+        file.type &&
+        file.type !== "image/jpeg"
+    ) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Please select a valid JPG/JPEG image." +
+            "</div>";
+
+        return;
+    }
+
+
+    const data =
+        new FormData();
+
+
+    data.append(
+        "studentId",
+        currentStudentId
+    );
+
+    data.append(
+        "action",
+        "enterMark"
+    );
+
+    data.append(
+        "subjectCode",
+        subjectCode
+    );
+
+    data.append(
+        "mark",
+        mark
+    );
+
+    data.append(
+        "proofFile",
+        file
+    );
+
+
+    try {
+
+        message.innerHTML =
+            "<div class='info-message'>" +
+            "Uploading proof and submitting mark..." +
+            "</div>";
+
+
+        const response =
+            await fetch(
+                "/api/student-operation",
+                {
+                    method: "POST",
+                    body: data
+                }
+            );
+
+
+        const result =
+            await response.text();
+
+        const parts =
+            result.split("|");
+
+
+        if (
+            response.ok &&
+            parts[0] === "OK"
+        ) {
+
+            message.innerHTML =
+                "<div class='success-message'>" +
+                escapeHTML(
+                    parts[1] ||
+                    "Mark submitted successfully."
+                ) +
+                "</div>";
+
+            document.getElementById(
+                "markValue"
+            ).value = "";
+
+            document.getElementById(
+                "markProofFile"
+            ).value = "";
+
+        } else {
+
+            message.innerHTML =
+                "<div class='error-message'>" +
+                escapeHTML(
+                    parts[1] ||
+                    "Could not submit mark."
+                ) +
+                "</div>";
+
+        }
+
+    } catch (error) {
+
+        message.innerHTML =
+            "<div class='error-message'>" +
+            "Could not connect to Java server." +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* GRADES */
+/* ================================================= */
+
+async function loadGrades(content) {
+
+    content.innerHTML =
+        "<div class='info-message'>Loading grades...</div>";
+
+    try {
+
+        const result =
+            await studentRequest(
+                "grades"
+            );
+
+        const lines =
+            result.text.trim().split("\n");
+
+        if (
+            lines[0] !== "OK"
+        ) {
+
+            content.innerHTML =
+                "<div class='error-message'>" +
+                escapeHTML(
+                    lines[0]
+                ) +
+                "</div>";
+
+            return;
+        }
+
+
+        if (lines.length <= 1) {
+
+            content.innerHTML =
+                "<div class='info-message'>" +
+                "No marks submitted yet." +
+                "</div>";
+
+            return;
+        }
+
+
+        let html = `
+
+            <div class="data-card">
+
+                <h3>
+                    My Subject Grades
+                </h3>
+
+                <table>
+
+                    <tr>
+                        <th>Subject</th>
+                        <th>Code</th>
+                        <th>Mark</th>
+                        <th>Grade</th>
+                        <th>Status</th>
+                        <th>Proof</th>
+                    </tr>
+
+        `;
+
+
+        for (
+            let i = 1;
+            i < lines.length;
+            i++
+        ) {
+
+            if (!lines[i].trim()) {
+                continue;
+            }
+
+            const row =
+                lines[i]
+                    .split("|")
+                    .map(decodeJava);
+
+
+            const subjectCode =
+                row[0] || "";
+
+            const subjectName =
+                row[1] || "";
+
+            const mark =
+                row[2] || "";
+
+            const grade =
+                row[3] || "";
+
+            const status =
+                row[4] || "";
+
+            const proof =
+                row[5] || "";
+
+
+            let proofHTML =
+                "No proof";
+
+
+            if (proof) {
+
+                proofHTML = `
+
+                    <img
+                        src="${escapeHTML(proof)}"
+                        class="proof-image"
+                        alt="Proof"
+                    >
+
+                    <a
+                        href="${escapeHTML(proof)}"
+                        target="_blank">
+
+                        View Full Proof
+
+                    </a>
+
+                `;
+
+            }
+
+
+            html += `
+
+                <tr>
+
+                    <td>
+                        ${escapeHTML(subjectName)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(subjectCode)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(mark)}
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${escapeHTML(grade)}
+                        </strong>
+                    </td>
+
+                    <td>
+                        <span class="status">
+                            ${escapeHTML(status)}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${proofHTML}
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+
+
+        html += `
+
+                </table>
+
+            </div>
+
+        `;
+
+
+        content.innerHTML =
+            html;
+
+
+    } catch (error) {
+
+        content.innerHTML =
+            "<div class='error-message'>" +
+            "Could not load grades." +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* GROUPS */
+/* ================================================= */
+
+async function loadGroups(content) {
+
+    content.innerHTML =
+        "<div class='info-message'>Loading groups...</div>";
+
+    try {
+
+        const result =
+            await studentRequest(
+                "groups"
+            );
+
+        const lines =
+            result.text.trim().split("\n");
+
+
+        if (
+            lines[0] !== "OK"
+        ) {
+
+            content.innerHTML =
+                "<div class='error-message'>" +
+                escapeHTML(lines[0]) +
+                "</div>";
+
+            return;
+        }
+
+
+        currentGroups = [];
+
+
+        for (
+            let i = 1;
+            i < lines.length;
+            i++
+        ) {
+
+            if (!lines[i].trim()) {
+                continue;
+            }
+
+            const row =
+                lines[i]
+                    .split("|")
+                    .map(decodeJava);
+
+            currentGroups.push({
+
+                id:
+                    row[0],
+
+                name:
+                    row[1],
+
+                code:
+                    row[2],
+
+                grade:
+                    row[3],
+
+                members:
+                    row[4]
+
+            });
+
+        }
+
+
+        if (
+            currentGroups.length === 0
+        ) {
+
+            content.innerHTML =
+                "<div class='info-message'>" +
+                "No group assigned yet. Your group appears after teacher verification." +
+                "</div>";
+
+            return;
+        }
+
+
+        let html = "";
+
+
+        currentGroups.forEach(group => {
+
+            html += `
+
+                <div class="data-card">
+
+                    <h3>
+                        ${escapeHTML(group.name)}
+                    </h3>
+
+                    <p>
+                        <strong>Subject:</strong>
+                        ${escapeHTML(group.code)}
+                    </p>
+
+                    <p>
+                        <strong>Grade:</strong>
+                        ${escapeHTML(group.grade)}
+                    </p>
+
+                    <p>
+                        <strong>Members:</strong>
+                        ${escapeHTML(group.members)}
+                    </p>
+
+                </div>
+
+            `;
+
+        });
+
+
+        content.innerHTML =
+            html;
+
+
+    } catch (error) {
+
+        content.innerHTML =
+            "<div class='error-message'>" +
+            "Could not load groups." +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* GROUP SELECTOR */
+/* ================================================= */
+
+function groupSelectorHTML(id = "groupSelector") {
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        return `
+            <div class="info-message">
+                No study group is available yet.
+            </div>
+        `;
+
+    }
+
+
+    let html = `
+
+        <div class="group-selector">
+
+            <label>
+                Select Group
+            </label>
+
+            <select id="${id}">
+
+    `;
+
+
+    currentGroups.forEach(group => {
+
+        html += `
+
+            <option value="${escapeHTML(group.id)}">
+
+                ${escapeHTML(group.name)}
+                -
+                ${escapeHTML(group.code)}
+
+            </option>
+
+        `;
+
+    });
+
+
+    html += `
+
+            </select>
+
+        </div>
+
+    `;
+
+
+    return html;
+
+}
+
+
+/* ================================================= */
+/* CHAT */
+/* ================================================= */
+
+async function loadChat(content) {
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        await loadGroups(
+            {
+                set innerHTML(value) {}
+            }
+        );
+
+    }
+
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "You need to be assigned to a group before using chat." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            ${groupSelectorHTML("chatGroup")}
+
+            <div
+                id="chatMessages"
+                class="chat-box">
+
+                Loading messages...
+
+            </div>
+
+            <input
+                type="text"
+                id="chatMessage"
+                placeholder="Type your message..."
+            >
+
+            <button onclick="sendChatMessage()">
+                Send Message
+            </button>
+
+            <div id="chatStatus"></div>
+
+        </div>
+
+    `;
+
+
+    await refreshChat();
+
+}
+
+
+/* ================================================= */
+/* REFRESH CHAT */
+/* ================================================= */
+
+async function refreshChat() {
+
+    const select =
+        document.getElementById(
+            "chatGroup"
+        );
+
+    if (!select) {
+        return;
+    }
+
+
+    const groupId =
+        select.value;
+
+
+    const result =
+        await studentRequest(
+            "chat",
+            {
+                groupId:
+                    groupId
+            }
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    const box =
+        document.getElementById(
+            "chatMessages"
+        );
+
+
+    if (
+        lines[0] !== "OK"
+    ) {
+
+        box.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(lines[0]) +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        lines.length <= 1
+    ) {
+
+        box.innerHTML =
+            "No messages yet.";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i < lines.length;
+        i++
+    ) {
+
+        if (!lines[i].trim()) {
+            continue;
+        }
+
+        const row =
+            lines[i]
+                .split("|")
+                .map(decodeJava);
+
+
+        html += `
+
+            <div class="chat-message">
+
+                <strong>
+                    ${escapeHTML(row[1])}
+                </strong>
+
+                <div>
+                    ${escapeHTML(row[2])}
+                </div>
+
+                <small>
+                    ${escapeHTML(row[3])}
+                </small>
+
+            </div>
+
+        `;
+
+    }
+
+
+    box.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* SEND CHAT MESSAGE */
+/* ================================================= */
+
+async function sendChatMessage() {
+
+    const groupId =
+        document.getElementById(
+            "chatGroup"
+        ).value;
+
+    const input =
+        document.getElementById(
+            "chatMessage"
+        );
+
+    const status =
+        document.getElementById(
+            "chatStatus"
+        );
+
+
+    const message =
+        input.value.trim();
+
+
+    if (!message) {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            "Message cannot be empty." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    const result =
+        await studentRequest(
+            "chat",
+            {
+                groupId:
+                    groupId,
+
+                message:
+                    message
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    if (
+        result.response.ok &&
+        parts[0] === "OK"
+    ) {
+
+        input.value = "";
+
+        status.innerHTML =
+            "<div class='success-message'>" +
+            escapeHTML(
+                parts[1] || "Message sent."
+            ) +
+            "</div>";
+
+        await refreshChat();
+
+    } else {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Could not send message."
+            ) +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* NOTES */
+/* ================================================= */
+
+async function loadNotes(content) {
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        await loadGroups(
+            {
+                set innerHTML(value) {}
+            }
+        );
+
+    }
+
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "You need to be assigned to a group before using notes." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            <h3>
+                Share Study Note
+            </h3>
+
+            ${groupSelectorHTML("noteGroup")}
+
+            <label>
+                JPG/JPEG Note Image
+            </label>
+
+            <input
+                type="file"
+                id="noteFile"
+                accept=".jpg,.jpeg,image/jpeg"
+            >
+
+            <p class="file-help">
+                Only JPG/JPEG images are allowed.
+                Maximum size: 2 MB.
+            </p>
+
+            <button onclick="addNote()">
+                Upload Note
+            </button>
+
+            <div id="noteStatus"></div>
+
+        </div>
+
+
+        <div class="data-card">
+
+            <h3>
+                Shared Notes
+            </h3>
+
+            <div id="notesList">
+                Loading notes...
+            </div>
+
+        </div>
+
+    `;
+
+
+    await refreshNotes();
+
+}
+
+
+/* ================================================= */
+/* REFRESH NOTES */
+/* ================================================= */
+
+async function refreshNotes() {
+
+    const select =
+        document.getElementById(
+            "noteGroup"
+        );
+
+    if (!select) {
+        return;
+    }
+
+
+    const groupId =
+        select.value;
+
+
+    const result =
+        await studentRequest(
+            "notes",
+            {
+                groupId:
+                    groupId
+            }
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    const list =
+        document.getElementById(
+            "notesList"
+        );
+
+
+    if (
+        lines[0] !== "OK"
+    ) {
+
+        list.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(lines[0]) +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        lines.length <= 1
+    ) {
+
+        list.innerHTML =
+            "<div class='info-message'>" +
+            "No notes uploaded yet." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i < lines.length;
+        i++
+    ) {
+
+        if (!lines[i].trim()) {
+            continue;
+        }
+
+
+        const row =
+            lines[i]
+                .split("|")
+                .map(decodeJava);
+
+
+        const studentId =
+            row[0] || "";
+
+        const fileName =
+            row[1] || "";
+
+        const filePath =
+            row[2] || "";
+
+
+        if (filePath) {
+
+            html += `
+
+                <div class="data-card">
+
+                    <strong>
+                        ${escapeHTML(fileName)}
+                    </strong>
+
+                    <p class="small-text">
+                        Shared by:
+                        ${escapeHTML(studentId)}
+                    </p>
+
+                    <img
+                        src="${escapeHTML(filePath)}"
+                        class="note-image"
+                        alt="Study note"
+                    >
+
+                    <a
+                        href="${escapeHTML(filePath)}"
+                        target="_blank">
+
+                        View Full Image
+
+                    </a>
+
+                </div>
+
+            `;
+
+        } else {
+
+            html += `
+
+                <div class="data-card">
+
+                    <strong>
+                        ${escapeHTML(fileName)}
+                    </strong>
+
+                    <p class="small-text">
+                        Shared by:
+                        ${escapeHTML(studentId)}
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+
+    list.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* ADD NOTE WITH IMAGE */
+/* ================================================= */
+
+async function addNote() {
+
+    const groupId =
+        document.getElementById(
+            "noteGroup"
+        ).value;
+
+    const file =
+        document.getElementById(
+            "noteFile"
+        ).files[0];
+
+    const status =
+        document.getElementById(
+            "noteStatus"
+        );
+
+
+    if (!file) {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            "Please select a JPG/JPEG note image." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    const fileName =
+        file.name.toLowerCase();
+
+
+    if (
+        !fileName.endsWith(".jpg") &&
+        !fileName.endsWith(".jpeg")
+    ) {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            "Only JPG/JPEG images are allowed." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        file.size >
+        2 * 1024 * 1024
+    ) {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            "File is too large. Maximum size is 2 MB." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        file.type &&
+        file.type !== "image/jpeg"
+    ) {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            "Please select a valid JPG/JPEG image." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    const data =
+        new FormData();
+
+
+    data.append(
+        "studentId",
+        currentStudentId
+    );
+
+    data.append(
+        "action",
+        "notes"
+    );
+
+    data.append(
+        "groupId",
+        groupId
+    );
+
+    data.append(
+        "noteFile",
+        file
+    );
+
+
+    try {
+
+        status.innerHTML =
+            "<div class='info-message'>" +
+            "Uploading note..." +
+            "</div>";
+
+
+        const response =
+            await fetch(
+                "/api/student-operation",
+                {
+                    method: "POST",
+                    body: data
+                }
+            );
+
+
+        const result =
+            await response.text();
+
+        const parts =
+            result.split("|");
+
+
+        if (
+            response.ok &&
+            parts[0] === "OK"
+        ) {
+
+            status.innerHTML =
+                "<div class='success-message'>" +
+                escapeHTML(
+                    parts[1] ||
+                    "Note uploaded successfully."
+                ) +
+                "</div>";
+
+
+            document.getElementById(
+                "noteFile"
+            ).value = "";
+
+
+            await refreshNotes();
+
+        } else {
+
+            status.innerHTML =
+                "<div class='error-message'>" +
+                escapeHTML(
+                    parts[1] ||
+                    "Could not upload note."
+                ) +
+                "</div>";
+
+        }
+
+    } catch (error) {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            "Could not connect to Java server." +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* SCHEDULE */
+/* ================================================= */
+
+async function loadSchedule(content) {
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        await loadGroups(
+            {
+                set innerHTML(value) {}
+            }
+        );
+
+    }
+
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "No group available." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            ${groupSelectorHTML("scheduleGroup")}
+
+            <h3>
+                Add Schedule
+            </h3>
+
+            <label>
+                Topic
+            </label>
+
+            <input
+                id="scheduleTopic"
+                placeholder="Example: Unit 1 Revision"
+            >
+
+            <label>
+                Date
+            </label>
+
+            <input
+                type="date"
+                id="scheduleDate"
+            >
+
+            <label>
+                Time
+            </label>
+
+            <input
+                type="time"
+                id="scheduleTime"
+            >
+
+            <label>
+                Location / Meeting
+            </label>
+
+            <input
+                id="scheduleLocation"
+                placeholder="Classroom / Google Meet"
+            >
+
+            <button onclick="addSchedule()">
+                Add Schedule
+            </button>
+
+            <div id="scheduleStatus"></div>
+
+        </div>
+
+
+        <div class="data-card">
+
+            <h3>
+                Existing Schedule
+            </h3>
+
+            <div id="scheduleList">
+                Loading...
+            </div>
+
+        </div>
+
+    `;
+
+
+    await refreshSchedule();
+
+}
+
+
+/* ================================================= */
+/* REFRESH SCHEDULE */
+/* ================================================= */
+
+async function refreshSchedule() {
+
+    const groupId =
+        document.getElementById(
+            "scheduleGroup"
+        ).value;
+
+
+    const result =
+        await studentRequest(
+            "schedule",
+            {
+                groupId:
+                    groupId
+            }
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    const list =
+        document.getElementById(
+            "scheduleList"
+        );
+
+
+    if (
+        lines[0] !== "OK"
+    ) {
+
+        list.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(lines[0]) +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        lines.length <= 1
+    ) {
+
+        list.innerHTML =
+            "<div class='info-message'>" +
+            "No schedule available." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i < lines.length;
+        i++
+    ) {
+
+        if (!lines[i].trim()) {
+            continue;
+        }
+
+
+        const row =
+            lines[i]
+                .split("|")
+                .map(decodeJava);
+
+
+        html += `
+
+            <div class="data-card">
+
+                <h3>
+                    ${escapeHTML(row[0])}
+                </h3>
+
+                <p>
+                    <strong>Date:</strong>
+                    ${escapeHTML(row[1])}
+                </p>
+
+                <p>
+                    <strong>Time:</strong>
+                    ${escapeHTML(row[2])}
+                </p>
+
+                <p>
+                    <strong>Location:</strong>
+                    ${escapeHTML(row[3])}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    list.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* ADD SCHEDULE */
+/* ================================================= */
+
+async function addSchedule() {
+
+    const groupId =
+        document.getElementById(
+            "scheduleGroup"
+        ).value;
+
+    const topic =
+        document.getElementById(
+            "scheduleTopic"
+        ).value.trim();
+
+    const date =
+        document.getElementById(
+            "scheduleDate"
+        ).value;
+
+    const time =
+        document.getElementById(
+            "scheduleTime"
+        ).value;
+
+    const location =
+        document.getElementById(
+            "scheduleLocation"
+        ).value.trim();
+
+    const status =
+        document.getElementById(
+            "scheduleStatus"
+        );
+
+
+    const result =
+        await studentRequest(
+            "schedule",
+            {
+                groupId,
+                topic,
+                date,
+                time,
+                location
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    if (
+        result.response.ok &&
+        parts[0] === "OK"
+    ) {
+
+        status.innerHTML =
+            "<div class='success-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Schedule added."
+            ) +
+            "</div>";
+
+        await refreshSchedule();
+
+    } else {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Could not add schedule."
+            ) +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* CLASS TUTOR */
+/* ================================================= */
+
+async function loadClassTutor(content) {
+
+    content.innerHTML =
+        "<div class='info-message'>Loading tutor information...</div>";
+
+
+    const result =
+        await studentRequest(
+            "classTutor"
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    if (
+        lines.length <= 1 ||
+        !lines[1]
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "Class tutor information not found." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    const row =
+        lines[1]
+            .split("|")
+            .map(decodeJava);
+
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            <h3>
+                ${escapeHTML(row[1])}
+            </h3>
+
+            <p>
+                <strong>Teacher ID:</strong>
+                ${escapeHTML(row[0])}
+            </p>
+
+            <p>
+                <strong>Class:</strong>
+                ${escapeHTML(row[2])}
+            </p>
+
+            <p>
+                <strong>Department:</strong>
+                ${escapeHTML(row[3])}
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ================================================= */
+/* FIND TUTOR */
+/* ================================================= */
+
+async function loadFindTutor(content) {
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        await loadGroups(
+            {
+                set innerHTML(value) {}
+            }
+        );
+
+    }
+
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            <h3>
+                Request an S-grade Tutor
+            </h3>
+
+            <label>
+                Subject
+            </label>
+
+            <select id="tutorSubject">
+
+                <option value="GAEST305">
+                    DEL - GAEST305
+                </option>
+
+                <option value="GAMAT301">
+                    Mathematics - GAMAT301
+                </option>
+
+            </select>
+
+            <label>
+                Topic
+            </label>
+
+            <input
+                id="tutorTopic"
+                placeholder="Example: Unit 2"
+            >
+
+            <label>
+                Tutor ID (optional)
+            </label>
+
+            <input
+                id="tutorId"
+                placeholder="Leave empty for a general request"
+            >
+
+            <label>
+                Amount (₹)
+            </label>
+
+            <input
+                type="number"
+                id="tutorAmount"
+                min="0"
+                max="750"
+                value="0"
+            >
+
+            <p class="small-text">
+                Maximum amount is ₹500 normally and ₹750 for F grade.
+            </p>
+
+            <button onclick="sendTutorRequest()">
+                Send Tutor Request
+            </button>
+
+            <div id="tutorStatus"></div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ================================================= */
+/* SEND TUTOR REQUEST */
+/* ================================================= */
+
+async function sendTutorRequest() {
+
+    const subjectCode =
+        document.getElementById(
+            "tutorSubject"
+        ).value;
+
+    const topic =
+        document.getElementById(
+            "tutorTopic"
+        ).value.trim();
+
+    const tutorId =
+        document.getElementById(
+            "tutorId"
+        ).value.trim();
+
+    const amount =
+        document.getElementById(
+            "tutorAmount"
+        ).value;
+
+    const status =
+        document.getElementById(
+            "tutorStatus"
+        );
+
+
+    const result =
+        await studentRequest(
+            "findTutor",
+            {
+                subjectCode,
+                topic,
+                tutorId,
+                amount
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    if (
+        result.response.ok &&
+        parts[0] === "OK"
+    ) {
+
+        status.innerHTML =
+            "<div class='success-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Tutor request sent."
+            ) +
+            "</div>";
+
+    } else {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Could not send request."
+            ) +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* TUTOR REQUESTS */
+/* ================================================= */
+
+async function loadTutorRequests(content) {
+
+    content.innerHTML =
+        "<div class='info-message'>Loading tutor requests...</div>";
+
+
+    const result =
+        await studentRequest(
+            "tutorRequests"
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    if (
+        lines[0] !== "OK"
+    ) {
+
+        content.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(lines[0]) +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        lines.length <= 1
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "No tutor requests found." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i < lines.length;
+        i++
+    ) {
+
+        if (!lines[i].trim()) {
+            continue;
+        }
+
+
+        const row =
+            lines[i]
+                .split("|")
+                .map(decodeJava);
+
+
+        html += `
+
+            <div class="data-card">
+
+                <h3>
+                    Request #${escapeHTML(row[0])}
+                </h3>
+
+                <p>
+                    <strong>Student:</strong>
+                    ${escapeHTML(row[2])}
+                </p>
+
+                <p>
+                    <strong>Tutor:</strong>
+                    ${escapeHTML(row[4] || "Not selected")}
+                </p>
+
+                <p>
+                    <strong>Subject:</strong>
+                    ${escapeHTML(row[5])}
+                </p>
+
+                <p>
+                    <strong>Topic:</strong>
+                    ${escapeHTML(row[6])}
+                </p>
+
+                <p>
+                    <strong>Amount:</strong>
+                    ₹${escapeHTML(row[7])}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="status">
+                        ${escapeHTML(row[8])}
+                    </span>
+                </p>
+
+                ${
+                    row[1] !== currentStudentId &&
+                    row[8] === "Pending"
+                    ?
+
+                    `
+
+                    <button
+                        class="success-button"
+                        onclick="tutorDecision(${Number(row[0])}, 'accept')">
+
+                        Accept
+
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        onclick="tutorDecision(${Number(row[0])}, 'reject')">
+
+                        Reject
+
+                    </button>
+
+                    `
+
+                    :
+
+                    ""
+
+                }
+
+            </div>
+
+        `;
+
+    }
+
+
+    content.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* TUTOR ACCEPT / REJECT */
+/* ================================================= */
+
+async function tutorDecision(
+    requestId,
+    decision
+) {
+
+    const result =
+        await studentRequest(
+            "tutorAction",
+            {
+                requestId,
+                decision
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    alert(
+        parts[1] ||
+        "Request updated."
+    );
+
+
+    const content =
+        document.getElementById(
+            "operationContent"
+        );
+
+
+    await loadTutorRequests(
+        content
+    );
+
+}
+
+
+/* ================================================= */
+/* LEAVE GROUP */
+/* ================================================= */
+
+async function loadLeaveGroup(content) {
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        await loadGroups(
+            {
+                set innerHTML(value) {}
+            }
+        );
+
+    }
+
+
+    if (
+        currentGroups.length === 0
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "You are not currently in a group." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    let html = `
+
+        <div class="data-card">
+
+            <h3>
+                Leave Study Group
+            </h3>
+
+            ${groupSelectorHTML("leaveGroupSelect")}
+
+            <p>
+                Leaving a group removes you from that group.
+            </p>
+
+            <button
+                class="danger-button"
+                onclick="leaveSelectedGroup()">
+
+                Leave Group
+
+            </button>
+
+            <div id="leaveStatus"></div>
+
+        </div>
+
+    `;
+
+
+    content.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* LEAVE SELECTED GROUP */
+/* ================================================= */
+
+async function leaveSelectedGroup() {
+
+    const groupId =
+        document.getElementById(
+            "leaveGroupSelect"
+        ).value;
+
+    const status =
+        document.getElementById(
+            "leaveStatus"
+        );
+
+
+    if (
+        !confirm(
+            "Are you sure you want to leave this group?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const result =
+        await studentRequest(
+            "leaveGroup",
+            {
+                groupId
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    if (
+        result.response.ok &&
+        parts[0] === "OK"
+    ) {
+
+        status.innerHTML =
+            "<div class='success-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "You left the group."
+            ) +
+            "</div>";
+
+        await loadGroups(
+            {
+                set innerHTML(value) {}
+            }
+        );
+
+    } else {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Could not leave group."
+            ) +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* REVIEW */
+/* ================================================= */
+
+function renderReview(content) {
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            <h3>
+                Anonymous Review
+            </h3>
+
+            <label>
+                Target
+            </label>
+
+            <input
+                id="reviewTarget"
+                placeholder="Tutor / group member"
+            >
+
+            <label>
+                Review
+            </label>
+
+            <textarea
+                id="reviewText"
+                placeholder="Write your review...">
+            </textarea>
+
+            <button onclick="submitReview()">
+                Submit Review
+            </button>
+
+            <div id="reviewStatus"></div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ================================================= */
+/* SUBMIT REVIEW */
+/* ================================================= */
+
+async function submitReview() {
+
+    const target =
+        document.getElementById(
+            "reviewTarget"
+        ).value.trim();
+
+    const reviewText =
+        document.getElementById(
+            "reviewText"
+        ).value.trim();
+
+    const status =
+        document.getElementById(
+            "reviewStatus"
+        );
+
+
+    const result =
+        await studentRequest(
+            "review",
+            {
+                target,
+                reviewText
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    if (
+        result.response.ok &&
+        parts[0] === "OK"
+    ) {
+
+        status.innerHTML =
+            "<div class='success-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Review submitted."
+            ) +
+            "</div>";
+
+    } else {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Could not submit review."
+            ) +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* REPORT */
+/* ================================================= */
+
+function renderReport(content) {
+
+    content.innerHTML = `
+
+        <div class="data-card">
+
+            <h3>
+                Report Group Member
+            </h3>
+
+            <label>
+                Student ID
+            </label>
+
+            <input
+                id="reportedId"
+                placeholder="Example: S002"
+            >
+
+            <label>
+                Reason
+            </label>
+
+            <textarea
+                id="reportReason"
+                placeholder="Explain the issue...">
+            </textarea>
+
+            <button
+                class="danger-button"
+                onclick="submitReport()">
+
+                Submit Report
+
+            </button>
+
+            <div id="reportStatus"></div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ================================================= */
+/* SUBMIT REPORT */
+/* ================================================= */
+
+async function submitReport() {
+
+    const reportedId =
+        document.getElementById(
+            "reportedId"
+        ).value.trim();
+
+    const reason =
+        document.getElementById(
+            "reportReason"
+        ).value.trim();
+
+    const status =
+        document.getElementById(
+            "reportStatus"
+        );
+
+
+    const result =
+        await studentRequest(
+            "report",
+            {
+                reportedId,
+                reason
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    if (
+        result.response.ok &&
+        parts[0] === "OK"
+    ) {
+
+        status.innerHTML =
+            "<div class='success-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Report submitted."
+            ) +
+            "</div>";
+
+    } else {
+
+        status.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(
+                parts[1] ||
+                "Could not submit report."
+            ) +
+            "</div>";
+
+    }
+
+}
+
+
+/* ================================================= */
+/* NOTIFICATIONS */
+/* ================================================= */
+
+async function loadNotifications(content) {
+
+    content.innerHTML =
+        "<div class='info-message'>Loading notifications...</div>";
+
+
+    const result =
+        await studentRequest(
+            "notifications"
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    if (
+        lines[0] !== "OK"
+    ) {
+
+        content.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(lines[0]) +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        lines.length <= 1
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "No notifications." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i < lines.length;
+        i++
+    ) {
+
+        if (!lines[i].trim()) {
+            continue;
+        }
+
+
+        const row =
+            lines[i]
+                .split("|")
+                .map(decodeJava);
+
+
+        html += `
+
+            <div class="data-card">
+
+                <p>
+                    ${escapeHTML(row[0])}
+                </p>
+
+                <small>
+                    ${escapeHTML(row[1])}
+                </small>
+
+            </div>
+
+        `;
+
+    }
+
+
+    content.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* TEACHER OPERATIONS */
+/* ================================================= */
+
+function openTeacherOperation(
+    operation
+) {
+
+    const area =
+        document.getElementById(
+            "teacherOperationArea"
+        );
+
+    area.classList.remove("hidden");
+
+
+    const title =
+        document.getElementById(
+            "teacherOperationTitle"
+        );
+
+    const content =
+        document.getElementById(
+            "teacherOperationContent"
+        );
+
+
+    if (
+        operation === "marks"
+    ) {
+
+        title.innerText =
+            "Verify Student Marks";
+
+        loadTeacherMarks(
+            content
+        );
+
+    }
+
+    else if (
+        operation === "reports"
+    ) {
+
+        title.innerText =
+            "Student Reports";
+
+        loadTeacherReports(
+            content
+        );
+
+    }
+
+}
+
+
+/* ================================================= */
+/* TEACHER MARKS */
+/* ================================================= */
+
+async function loadTeacherMarks(
+    content
+) {
+
+    content.innerHTML =
+        "<div class='info-message'>Loading pending marks...</div>";
+
+
+    const result =
+        await teacherRequest(
+            "marks"
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    if (
+        lines[0] !== "OK"
+    ) {
+
+        content.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(lines[0]) +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        lines.length <= 1
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "No pending mark verifications." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i < lines.length;
+        i++
+    ) {
+
+        if (!lines[i].trim()) {
+            continue;
+        }
+
+
+        const row =
+            lines[i]
+                .split("|")
+                .map(decodeJava);
+
+
+        const markId =
+            row[0];
+
+        const studentId =
+            row[1];
+
+        const studentName =
+            row[2];
+
+        const subjectCode =
+            row[3];
+
+        const subjectName =
+            row[4];
+
+        const mark =
+            row[5];
+
+        const grade =
+            row[6];
+
+        const proof =
+            row[7];
+
+        const status =
+            row[8];
+
+
+        let proofHTML =
+            "<p>No proof uploaded.</p>";
+
+
+        if (proof) {
+
+            proofHTML = `
+
+                <img
+                    src="${escapeHTML(proof)}"
+                    class="proof-image"
+                    alt="Student proof"
+                >
+
+                <a
+                    href="${escapeHTML(proof)}"
+                    target="_blank">
+
+                    View Full Proof
+
+                </a>
+
+            `;
+
+        }
+
+
+        html += `
+
+            <div class="data-card">
+
+                <h3>
+                    ${escapeHTML(studentName)}
+                </h3>
+
+                <p>
+                    <strong>Student ID:</strong>
+                    ${escapeHTML(studentId)}
+                </p>
+
+                <p>
+                    <strong>Subject:</strong>
+                    ${escapeHTML(subjectName)}
+                    (${escapeHTML(subjectCode)})
+                </p>
+
+                <p>
+                    <strong>Mark:</strong>
+                    ${escapeHTML(mark)}
+                </p>
+
+                <p>
+                    <strong>Calculated Grade:</strong>
+                    ${escapeHTML(grade)}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${escapeHTML(status)}
+                </p>
+
+                <p>
+                    <strong>Uploaded Proof:</strong>
+                </p>
+
+                ${proofHTML}
+
+                <div class="verify-buttons">
+
+                    <button
+                        class="success-button"
+                        onclick="verifyMark(
+                            ${Number(markId)},
+                            'verify'
+                        )">
+
+                        ✓ Verify Mark
+
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        onclick="verifyMark(
+                            ${Number(markId)},
+                            'reject'
+                        )">
+
+                        ✕ Reject
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    content.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* VERIFY / REJECT MARK */
+/* ================================================= */
+
+async function verifyMark(
+    markId,
+    decision
+) {
+
+    const result =
+        await teacherRequest(
+            "verify",
+            {
+                markId,
+                decision
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    alert(
+        parts[1] ||
+        "Verification completed."
+    );
+
+
+    const content =
+        document.getElementById(
+            "teacherOperationContent"
+        );
+
+
+    await loadTeacherMarks(
+        content
+    );
+
+}
+
+
+/* ================================================= */
+/* TEACHER REPORTS */
+/* ================================================= */
+
+async function loadTeacherReports(
+    content
+) {
+
+    content.innerHTML =
+        "<div class='info-message'>Loading reports...</div>";
+
+
+    const result =
+        await teacherRequest(
+            "reports"
+        );
+
+
+    const lines =
+        result.text.trim().split("\n");
+
+
+    if (
+        lines[0] !== "OK"
+    ) {
+
+        content.innerHTML =
+            "<div class='error-message'>" +
+            escapeHTML(lines[0]) +
+            "</div>";
+
+        return;
+
+    }
+
+
+    if (
+        lines.length <= 1
+    ) {
+
+        content.innerHTML =
+            "<div class='info-message'>" +
+            "No reports found." +
+            "</div>";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i < lines.length;
+        i++
+    ) {
+
+        if (!lines[i].trim()) {
+            continue;
+        }
+
+
+        const row =
+            lines[i]
+                .split("|")
+                .map(decodeJava);
+
+
+        html += `
+
+            <div class="data-card">
+
+                <h3>
+                    Report #${escapeHTML(row[0])}
+                </h3>
+
+                <p>
+                    <strong>Reporter:</strong>
+                    ${escapeHTML(row[2])}
+                    (${escapeHTML(row[1])})
+                </p>
+
+                <p>
+                    <strong>Reported Student:</strong>
+                    ${escapeHTML(row[4])}
+                    (${escapeHTML(row[3])})
+                </p>
+
+                <p>
+                    <strong>Reason:</strong>
+                    ${escapeHTML(row[5])}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="status">
+                        ${escapeHTML(row[6])}
+                    </span>
+                </p>
+
+                <p>
+                    <strong>Warnings:</strong>
+                    ${escapeHTML(row[7])}
+                </p>
+
+                ${
+                    row[6] === "Pending"
+
+                    ?
+
+                    `
+
+                    <button
+                        class="success-button"
+                        onclick="reviewReport(
+                            ${Number(row[0])},
+                            'valid'
+                        )">
+
+                        Mark Valid
+
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        onclick="reviewReport(
+                            ${Number(row[0])},
+                            'invalid'
+                        )">
+
+                        Mark Invalid
+
+                    </button>
+
+                    `
+
+                    :
+
+                    ""
+
+                }
+
+            </div>
+
+        `;
+
+    }
+
+
+    content.innerHTML =
+        html;
+
+}
+
+
+/* ================================================= */
+/* REVIEW REPORT */
+/* ================================================= */
+
+async function reviewReport(
+    reportId,
+    decision
+) {
+
+    const result =
+        await teacherRequest(
+            "reportAction",
+            {
+                reportId,
+                decision
+            },
+            "POST"
+        );
+
+
+    const parts =
+        result.text.split("|");
+
+
+    alert(
+        parts[1] ||
+        "Report reviewed."
+    );
+
+
+    const content =
+        document.getElementById(
+            "teacherOperationContent"
+        );
+
+
+    await loadTeacherReports(
+        content
+    );
+
+}
+
+
+/* ================================================= */
+/* CLOSE OPERATION */
+/* ================================================= */
+
+function closeOperation() {
+
+    document
+        .getElementById(
+            "operationArea"
+        )
+        .classList.add("hidden");
+
+}
+
+
+/* ================================================= */
+/* CLOSE TEACHER OPERATION */
+/* ================================================= */
+
+function closeTeacherOperation() {
+
+    document
+        .getElementById(
+            "teacherOperationArea"
+        )
+        .classList.add("hidden");
+
+}
+
+
+/* ================================================= */
+/* LOGOUT */
+/* ================================================= */
+
+function logout() {
+
+    currentStudentId = "";
+    currentStudentName = "";
+
+    currentTeacherId = "";
+    currentTeacherName = "";
+
+    currentGroups = [];
+    currentGroupId = 0;
+
+
+    document
+        .getElementById(
+            "operationArea"
+        )
+        .classList.add("hidden");
+
+
+    document
+        .getElementById(
+            "teacherOperationArea"
+        )
+        .classList.add("hidden");
+
+
+    showPage("home");
+
+}
+
+
+/* ================================================= */
+/* INITIAL PAGE */
+/* ================================================= */
+
+showPage("home");
+
+</script>
+
+</body>
+</html>
