@@ -12,7 +12,7 @@ import java.util.*;
 public class StudyHelper {
     static final int PORT = 8080;
     static final String DB_URL = "jdbc:mysql://localhost:3306/study_helper?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-    
+
     static final String DB_USER = "root";
     static final String DB_PASSWORD = "NewPassword123!";
     static HttpServer server;
@@ -46,9 +46,8 @@ public class StudyHelper {
             throw new SQLException("Could not create upload folders.", e);
         }
         try (Connection c = getConnection(); Statement s = c.createStatement()) {
-            s.executeUpdate("CREATE TABLE IF NOT EXISTS tutor_requests (request_id INT AUTO_INCREMENT PRIMARY KEY, student_id VARCHAR(20) NOT NULL, tutor_id VARCHAR(20) NULL, group_name VARCHAR(100), subject_code VARCHAR(20), topic VARCHAR(255), amount DOUBLE, status VARCHAR(40), FOREIGN KEY(student_id) REFERENCES students(student_id))");
-            
-
+            // FIX: added subject_name column
+            s.executeUpdate("CREATE TABLE IF NOT EXISTS tutor_requests (request_id INT AUTO_INCREMENT PRIMARY KEY, student_id VARCHAR(20) NOT NULL, tutor_id VARCHAR(20) NULL, group_name VARCHAR(100), subject_code VARCHAR(20), subject_name VARCHAR(100), topic VARCHAR(255), amount DOUBLE, status VARCHAR(40), FOREIGN KEY(student_id) REFERENCES students(student_id))");
 
             s.executeUpdate("CREATE TABLE IF NOT EXISTS group_messages (message_id INT AUTO_INCREMENT PRIMARY KEY, group_id INT, student_id VARCHAR(20), message_text VARCHAR(1000), message_time VARCHAR(50))");
             s.executeUpdate("CREATE TABLE IF NOT EXISTS group_notes (note_id INT AUTO_INCREMENT PRIMARY KEY, group_id INT, student_id VARCHAR(20), file_name VARCHAR(255), file_path VARCHAR(500), file_type VARCHAR(20))");
@@ -56,6 +55,9 @@ public class StudyHelper {
             s.executeUpdate("CREATE TABLE IF NOT EXISTS reports_data (report_id INT AUTO_INCREMENT PRIMARY KEY, reporter_id VARCHAR(20), reported_id VARCHAR(20), reason VARCHAR(500), status VARCHAR(30))");
             s.executeUpdate("CREATE TABLE IF NOT EXISTS notifications (notification_id INT AUTO_INCREMENT PRIMARY KEY, student_id VARCHAR(20), message VARCHAR(1000), notification_time VARCHAR(50))");
             s.executeUpdate("CREATE TABLE IF NOT EXISTS reviews_data (review_id INT AUTO_INCREMENT PRIMARY KEY, student_id VARCHAR(20), target VARCHAR(100), review_text VARCHAR(1000))");
+
+            // Repair group membership for marks that were verified before this version ran.
+            backfillVerifiedGroups(c);
         }
     }
 
@@ -267,8 +269,17 @@ public class StudyHelper {
 
     static void groups(Connection c,HttpExchange ex,String id)throws Exception{
         StringBuilder out=new StringBuilder("OK\n");
-        String sql="SELECT g.group_id,g.group_name,g.subject_code,g.grade,(SELECT COUNT(*) FROM group_members gm2 WHERE gm2.group_id=g.group_id) members FROM study_groups g JOIN group_members gm ON g.group_id=gm.group_id WHERE gm.student_id=? ORDER BY g.group_id";
-        try(PreparedStatement p=c.prepareStatement(sql)){p.setString(1,id);ResultSet r=p.executeQuery();while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(r.getInt(5)).append("\n");}
+        String sql="SELECT DISTINCT g.group_id,g.group_name,g.subject_code,g.grade,"
+                +"(SELECT COUNT(*) FROM group_members gm2 WHERE gm2.group_id=g.group_id) members "
+                +"FROM study_groups g WHERE EXISTS (SELECT 1 FROM group_members gm WHERE gm.group_id=g.group_id AND gm.student_id=?) "
+                +"OR EXISTS (SELECT 1 FROM tutor_requests tr WHERE tr.group_name=g.group_name AND tr.tutor_id=? AND tr.status LIKE 'Accepted%') "
+                +"ORDER BY g.group_id";
+        try(PreparedStatement p=c.prepareStatement(sql)){
+            p.setString(1,id);p.setString(2,id);
+            try(ResultSet r=p.executeQuery()){
+                while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(r.getInt(5)).append("\n");
+            }
+        }
         response(ex,200,out.toString());
     }
 
@@ -277,12 +288,13 @@ public class StudyHelper {
         if(gid<=0){response(ex,400,"ERROR|Choose a group first.");return;}
         if("POST".equalsIgnoreCase(ex.getRequestMethod())){
             String msg=trim(d.get("message")); if(blank(msg)){response(ex,400,"ERROR|Message cannot be empty.");return;}
-            if(!member(c,gid,id)){response(ex,403,"ERROR|You are not a member of this group.");return;}
+            if(!canAccessGroupChat(c,gid,id)){response(ex,403,"ERROR|You are not a member of this group or an accepted tutor.");return;}
             try(PreparedStatement p=c.prepareStatement("INSERT INTO group_messages(group_id,student_id,message_text,message_time) VALUES(?,?,?,?)")){p.setInt(1,gid);p.setString(2,id);p.setString(3,msg);p.setString(4,now());p.executeUpdate();}
             response(ex,200,"OK|Message sent."); return;
         }
+        if(!canAccessGroupChat(c,gid,id)){response(ex,403,"ERROR|You are not a member of this group or an accepted tutor.");return;}
         StringBuilder out=new StringBuilder("OK\n");
-        try(PreparedStatement p=c.prepareStatement("SELECT gm.student_id,COALESCE(s.student_name,gm.student_id),gm.message_text,gm.message_time FROM group_messages gm LEFT JOIN students s ON s.student_id=gm.student_id WHERE gm.group_id=? ORDER BY gm.message_id")){p.setInt(1,gid);ResultSet r=p.executeQuery();while(r.next())out.append(esc(r.getString(1))).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("\n");}
+        try(PreparedStatement p=c.prepareStatement("SELECT gm.student_id,COALESCE(s.student_name,gm.student_id),gm.message_text,gm.message_time FROM group_messages gm LEFT JOIN students s ON s.student_id=gm.student_id WHERE gm.group_id=? ORDER BY gm.message_id")){p.setInt(1,gid);try(ResultSet r=p.executeQuery()){while(r.next())out.append(esc(r.getString(1))).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("\n");}}
         response(ex,200,out.toString());
     }
 
@@ -377,9 +389,25 @@ public class StudyHelper {
     }
 
     static void schedule(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{
-        int gid=num(d.get("groupId"));if(gid<=0){response(ex,400,"ERROR|Choose a group first.");return;}if(!member(c,gid,id)){response(ex,403,"ERROR|Not a group member.");return;}
-        if("POST".equalsIgnoreCase(ex.getRequestMethod())){String topic=trim(d.get("topic")),date=trim(d.get("date")),time=trim(d.get("time")),loc=trim(d.get("location"));if(blank(topic)||blank(date)||blank(time)){response(ex,400,"ERROR|Topic, date and time are required.");return;}try(PreparedStatement p=c.prepareStatement("INSERT INTO group_schedules(group_id,topic,schedule_date,schedule_time,location) VALUES(?,?,?,?,?)")){p.setInt(1,gid);p.setString(2,topic);p.setString(3,date);p.setString(4,time);p.setString(5,loc);p.executeUpdate();}response(ex,200,"OK|Schedule added.");return;}
-        StringBuilder out=new StringBuilder("OK\n");try(PreparedStatement p=c.prepareStatement("SELECT topic,schedule_date,schedule_time,location FROM group_schedules WHERE group_id=? ORDER BY schedule_id DESC")){p.setInt(1,gid);ResultSet r=p.executeQuery();while(r.next())out.append(esc(r.getString(1))).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("\n");}response(ex,200,out.toString());
+        int gid=num(d.get("groupId"));
+        if(gid<=0){response(ex,400,"ERROR|Choose a group first.");return;}
+        if(!member(c,gid,id)){response(ex,403,"ERROR|Not a group member.");return;}
+        if("POST".equalsIgnoreCase(ex.getRequestMethod())){
+            String topic=trim(d.get("topic")),date=trim(d.get("date")),time=trim(d.get("time")),loc=trim(d.get("location"));
+            if(blank(topic)||blank(date)||blank(time)){response(ex,400,"ERROR|Topic, date and time are required.");return;}
+            try(PreparedStatement p=c.prepareStatement("INSERT INTO group_schedules(group_id,topic,schedule_date,schedule_time,location) VALUES(?,?,?,?,?)")){
+                p.setInt(1,gid);p.setString(2,topic);p.setString(3,date);p.setString(4,time);p.setString(5,loc);p.executeUpdate();
+            }
+            response(ex,200,"OK|Schedule added.");
+            return;
+        }
+        StringBuilder out=new StringBuilder("OK\n");
+        try(PreparedStatement p=c.prepareStatement("SELECT topic,schedule_date,schedule_time,location FROM group_schedules WHERE group_id=? ORDER BY schedule_id DESC")){
+            p.setInt(1,gid);
+            ResultSet r=p.executeQuery();
+            while(r.next())out.append(esc(r.getString(1))).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("\n");
+        }
+        response(ex,200,out.toString());
     }
 
     static void enterMark(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{
@@ -466,21 +494,70 @@ public class StudyHelper {
     }
 
     static void findTutor(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{
-        String code=trim(d.get("subjectCode")),topic=trim(d.get("topic")),selected=trim(d.get("tutorId"));double amount=Double.parseDouble(blank(d.get("amount"))?"0":d.get("amount"));
+        String code=trim(d.get("subjectCode")),topic=trim(d.get("topic")),selected=trim(d.get("tutorId"));
         if(blank(code)||blank(topic)){response(ex,400,"ERROR|Subject and topic are required.");return;}
-        String grade="";try(PreparedStatement p=c.prepareStatement("SELECT grade FROM subject_marks WHERE student_id=? AND subject_code=? AND status='Verified' ORDER BY mark_id DESC LIMIT 1")){p.setString(1,id);p.setString(2,code);ResultSet r=p.executeQuery();if(r.next())grade=r.getString(1);}
-        if(blank(grade)){response(ex,400,"ERROR|You need a verified mark for this subject first.");return;}
-        double max="F".equalsIgnoreCase(grade)?750:500;if(amount<0||amount>max){response(ex,400,"ERROR|Maximum allowed amount is ₹"+(int)max+".");return;}
-        int gid=findStudentGroup(c,id,code,grade);if(gid<=0){response(ex,400,"ERROR|Your verified subject has not been assigned to a group yet.");return;}
-        if(!blank(selected)&&!isTutorForSubject(c,selected,code)){response(ex,400,"ERROR|Selected tutor is not an S-grade tutor for this subject.");return;}
-        try(PreparedStatement p=c.prepareStatement("INSERT INTO tutor_requests(student_id,tutor_id,group_name,subject_code,topic,amount,status) SELECT ?,?,?,?, ?,?, 'Pending' FROM study_groups WHERE group_id=?")){p.setString(1,id);if(blank(selected))p.setNull(2,Types.VARCHAR);else p.setString(2,selected);p.setString(3,groupName(c,gid));p.setString(4,code);p.setString(5,topic);p.setDouble(6,amount);p.setInt(7,gid);p.executeUpdate();}
-        response(ex,200,"OK|Tutor request sent.");
+        if(!"GAMAT301".equalsIgnoreCase(code)&&!"GAEST305".equalsIgnoreCase(code)){response(ex,400,"ERROR|Invalid subject.");return;}
+        double amount;
+        try{amount=Double.parseDouble(blank(d.get("amount"))?"0":d.get("amount"));}
+        catch(NumberFormatException e){response(ex,400,"ERROR|Enter a valid amount.");return;}
+
+        String gradeValue="";
+        try(PreparedStatement p=c.prepareStatement("SELECT grade FROM subject_marks WHERE student_id=? AND subject_code=? AND UPPER(TRIM(status))='VERIFIED' ORDER BY mark_id DESC LIMIT 1")){
+            p.setString(1,id);p.setString(2,code);
+            try(ResultSet r=p.executeQuery()){if(r.next())gradeValue=r.getString(1);}
+        }
+        if(blank(gradeValue)){response(ex,400,"ERROR|You need a verified mark for this subject first.");return;}
+        double max="F".equalsIgnoreCase(gradeValue)?750:500;
+        if(amount<0||amount>max){response(ex,400,"ERROR|Maximum allowed amount is ₹"+(int)max+".");return;}
+        int gid=findStudentGroup(c,id,code,gradeValue);
+        if(gid<=0){
+            // If a verified mark predates group assignment, repair it before failing.
+            ensureGroup(c,id,code,gradeValue);
+            gid=findStudentGroup(c,id,code,gradeValue);
+        }
+        if(gid<=0){response(ex,400,"ERROR|Your verified subject has not been assigned to a group yet.");return;}
+        if(!blank(selected)&&!isTutorForSubject(c,selected,code)){response(ex,400,"ERROR|Selected tutor is not an active S-grade tutor for this subject.");return;}
+        if(id.equals(selected)){response(ex,400,"ERROR|You cannot request yourself as a tutor.");return;}
+
+        try (PreparedStatement p = c.prepareStatement(
+                "INSERT INTO tutor_requests " +
+                "(student_id, tutor_id, group_name, subject_code, subject_name, topic, amount, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')")) {
+
+            p.setString(1, id);
+            if (blank(selected)) {
+                p.setNull(2, Types.VARCHAR);
+            } else {
+                p.setString(2, selected);
+            }
+
+            p.setString(3, groupName(c, gid));
+            p.setString(4, code);
+            p.setString(5, subjectName(code));
+            p.setString(6, topic);
+            p.setDouble(7, amount);
+            p.executeUpdate();
+        }
+
+        // FIX: method was never closed and no response was sent
+        response(ex, 200, "OK|Tutor request sent.");
     }
 
     static void tutorRequests(Connection c,HttpExchange ex,String id)throws Exception{
         StringBuilder out=new StringBuilder("OK\n");
-        String sql="SELECT tr.request_id,tr.student_id,COALESCE(s.student_name,''),COALESCE(tr.tutor_id,''),COALESCE(t.teacher_name,''),tr.subject_code,tr.topic,tr.amount,tr.status FROM tutor_requests tr JOIN students s ON s.student_id=tr.student_id LEFT JOIN teachers t ON t.teacher_id=tr.tutor_id WHERE tr.student_id=? OR tr.tutor_id=? OR (tr.tutor_id IS NULL AND EXISTS(SELECT 1 FROM subject_marks sm WHERE sm.student_id=? AND sm.subject_code=tr.subject_code AND sm.grade='S' AND sm.status='Verified')) ORDER BY tr.request_id DESC";
-        try(PreparedStatement p=c.prepareStatement(sql)){p.setString(1,id);p.setString(2,id);p.setString(3,id);ResultSet r=p.executeQuery();while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(esc(r.getString(5))).append("|").append(esc(r.getString(6))).append("|").append(esc(r.getString(7))).append("|").append(r.getDouble(8)).append("|").append(esc(r.getString(9))).append("\n");}
+        String sql="SELECT tr.request_id,tr.student_id,COALESCE(req.student_name,''),COALESCE(tr.tutor_id,''),COALESCE(tutor.student_name,''),tr.subject_code,tr.topic,tr.amount,tr.status "
+                +"FROM tutor_requests tr JOIN students req ON req.student_id=tr.student_id "
+                +"LEFT JOIN students tutor ON tutor.student_id=tr.tutor_id "
+                +"WHERE tr.student_id=? OR tr.tutor_id=? OR (tr.tutor_id IS NULL AND EXISTS("
+                +"SELECT 1 FROM subject_marks sm WHERE sm.student_id=? AND sm.subject_code=tr.subject_code AND sm.grade='S' AND UPPER(TRIM(sm.status))='VERIFIED' "
+                +"AND NOT EXISTS (SELECT 1 FROM subject_marks newer WHERE newer.student_id=sm.student_id AND newer.subject_code=sm.subject_code AND newer.mark_id>sm.mark_id AND UPPER(TRIM(newer.status))='VERIFIED'))) "
+                +"ORDER BY tr.request_id DESC";
+        try(PreparedStatement p=c.prepareStatement(sql)){
+            p.setString(1,id);p.setString(2,id);p.setString(3,id);
+            try(ResultSet r=p.executeQuery()){
+                while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(esc(r.getString(5))).append("|").append(esc(r.getString(6))).append("|").append(esc(r.getString(7))).append("|").append(r.getDouble(8)).append("|").append(esc(r.getString(9))).append("\n");
+            }
+        }
         response(ex,200,out.toString());
     }
 
@@ -488,276 +565,353 @@ public class StudyHelper {
         int rid=num(d.get("requestId"));String act=trim(d.get("decision"));
         if(!"accept".equals(act)&&!"reject".equals(act)){response(ex,400,"ERROR|Invalid tutor decision.");return;}
         String code=null,student=null,currentTutor=null,status=null;int gid=0;
-        try(PreparedStatement p=c.prepareStatement("SELECT student_id,tutor_id,subject_code,status,group_name FROM tutor_requests WHERE request_id=?")){p.setInt(1,rid);ResultSet r=p.executeQuery();if(!r.next()){response(ex,404,"ERROR|Request not found.");return;}student=r.getString(1);currentTutor=r.getString(2);code=r.getString(3);status=r.getString(4);gid=findGroupIdByName(c,r.getString(5));}
+        try(PreparedStatement p=c.prepareStatement("SELECT student_id,tutor_id,subject_code,status,group_name FROM tutor_requests WHERE request_id=?")){
+            p.setInt(1,rid);
+            ResultSet r=p.executeQuery();
+            if(!r.next()){response(ex,404,"ERROR|Request not found.");return;}
+            student=r.getString(1);currentTutor=r.getString(2);code=r.getString(3);status=r.getString(4);gid=findGroupIdByName(c,r.getString(5));
+        }
         if(!"Pending".equalsIgnoreCase(status)){response(ex,400,"ERROR|This request is no longer pending.");return;}
-        boolean allowed=isTutorForSubject(c,id,code) && (blank(currentTutor)||id.equals(currentTutor));if(!allowed){response(ex,403,"ERROR|Only an eligible S-grade tutor can handle this request.");return;}
+        boolean allowed=isTutorForSubject(c,id,code) && (blank(currentTutor)||id.equals(currentTutor));
+        if(!allowed){response(ex,403,"ERROR|Only an eligible S-grade tutor can handle this request.");return;}
         if("accept".equals(act)){
             try(PreparedStatement p=c.prepareStatement("UPDATE tutor_requests SET tutor_id=?,status='Accepted - Pay via GPay / meet via Google Meet' WHERE request_id=?")){p.setString(1,id);p.setInt(2,rid);p.executeUpdate();}
             notify(c,student,"Your tutor request was accepted. Contact the tutor and arrange payment through GPay and the session through Google Meet.");
-        }else{try(PreparedStatement p=c.prepareStatement("UPDATE tutor_requests SET tutor_id=?,status='Rejected' WHERE request_id=?")){p.setString(1,id);p.setInt(2,rid);p.executeUpdate();}notify(c,student,"Your tutor request was rejected by the tutor.");}
+        }else{
+            try(PreparedStatement p=c.prepareStatement("UPDATE tutor_requests SET tutor_id=?,status='Rejected' WHERE request_id=?")){p.setString(1,id);p.setInt(2,rid);p.executeUpdate();}
+            notify(c,student,"Your tutor request was rejected by the tutor.");
+        }
         response(ex,200,"OK|Request updated.");
     }
 
     static void classTutor(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{
         StringBuilder out=new StringBuilder("OK\n");
-        try(PreparedStatement p=c.prepareStatement("SELECT t.teacher_id,t.teacher_name,s.class_name,s.department FROM students s JOIN teachers t ON t.teacher_id=s.class_tutor_id WHERE s.student_id=?")){p.setString(1,id);ResultSet r=p.executeQuery();if(r.next())out.append(r.getString(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("\n");}
+        try(PreparedStatement p=c.prepareStatement("SELECT t.teacher_id,t.teacher_name,s.class_name,s.department FROM students s JOIN teachers t ON t.teacher_id=s.class_tutor_id WHERE s.student_id=?")){
+            p.setString(1,id);
+            ResultSet r=p.executeQuery();
+            if(r.next())out.append(r.getString(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("\n");
+        }
         response(ex,200,out.toString());
     }
 
     static void review(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{
-        String target=trim(d.get("target")),text=trim(d.get("reviewText"));if(blank(target)||blank(text)){response(ex,400,"ERROR|Target and review are required.");return;}try(PreparedStatement p=c.prepareStatement("INSERT INTO reviews_data(student_id,target,review_text) VALUES(?,?,?)")){p.setString(1,id);p.setString(2,target);p.setString(3,text);p.executeUpdate();}response(ex,200,"OK|Anonymous review submitted.");
+        String target=trim(d.get("target")),text=trim(d.get("reviewText"));
+        if(blank(target)||blank(text)){response(ex,400,"ERROR|Target and review are required.");return;}
+        try(PreparedStatement p=c.prepareStatement("INSERT INTO reviews_data(student_id,target,review_text) VALUES(?,?,?)")){
+            p.setString(1,id);p.setString(2,target);p.setString(3,text);p.executeUpdate();
+        }
+        response(ex,200,"OK|Anonymous review submitted.");
     }
 
     static void report(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{
-        String target=trim(d.get("reportedId")),reason=trim(d.get("reason"));if(blank(target)||blank(reason)){response(ex,400,"ERROR|Student ID and reason are required.");return;}if(id.equalsIgnoreCase(target)){response(ex,400,"ERROR|You cannot report yourself.");return;}if(!shareAnyGroup(c,id,target)){response(ex,403,"ERROR|You can report only a member of one of your groups.");return;}try(PreparedStatement p=c.prepareStatement("INSERT INTO reports_data(reporter_id,reported_id,reason,status) VALUES(?,?,?,'Pending')")){p.setString(1,id);p.setString(2,target);p.setString(3,reason);p.executeUpdate();}response(ex,200,"OK|Report submitted for teacher review.");
+        String target=trim(d.get("reportedId")),reason=trim(d.get("reason"));
+        if(blank(target)||blank(reason)){response(ex,400,"ERROR|Student ID and reason are required.");return;}
+        if(id.equalsIgnoreCase(target)){response(ex,400,"ERROR|You cannot report yourself.");return;}
+        if(!shareAnyGroup(c,id,target)){response(ex,403,"ERROR|You can report only a member of one of your groups.");return;}
+        try(PreparedStatement p=c.prepareStatement("INSERT INTO reports_data(reporter_id,reported_id,reason,status) VALUES(?,?,?,'Pending')")){
+            p.setString(1,id);p.setString(2,target);p.setString(3,reason);p.executeUpdate();
+        }
+        response(ex,200,"OK|Report submitted for teacher review.");
     }
 
     static void notifications(Connection c,HttpExchange ex,String id)throws Exception{
-        StringBuilder out=new StringBuilder("OK\n");try(PreparedStatement p=c.prepareStatement("SELECT message,notification_time FROM notifications WHERE student_id=? ORDER BY notification_id DESC")){p.setString(1,id);ResultSet r=p.executeQuery();while(r.next())out.append(esc(r.getString(1))).append("|").append(esc(r.getString(2))).append("\n");}response(ex,200,out.toString());
+        StringBuilder out=new StringBuilder("OK\n");
+        try(PreparedStatement p=c.prepareStatement("SELECT message,notification_time FROM notifications WHERE student_id=? ORDER BY notification_id DESC")){
+            p.setString(1,id);
+            ResultSet r=p.executeQuery();
+            while(r.next())out.append(esc(r.getString(1))).append("|").append(esc(r.getString(2))).append("\n");
+        }
+        response(ex,200,out.toString());
     }
 
-    static void leaveGroup(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{int gid=num(d.get("groupId"));if(gid<=0){response(ex,400,"ERROR|Choose a group.");return;}if(!member(c,gid,id)){response(ex,403,"ERROR|You are not a member of this group.");return;}try(PreparedStatement p=c.prepareStatement("DELETE FROM group_members WHERE group_id=? AND student_id=?")){p.setInt(1,gid);p.setString(2,id);p.executeUpdate();}response(ex,200,"OK|You left the group.");}
+    static void leaveGroup(Connection c,HttpExchange ex,String id,Map<String,String>d)throws Exception{
+        int gid=num(d.get("groupId"));
+        if(gid<=0){response(ex,400,"ERROR|Choose a group.");return;}
+        if(!member(c,gid,id)){response(ex,403,"ERROR|You are not a member of this group.");return;}
+        try(PreparedStatement p=c.prepareStatement("DELETE FROM group_members WHERE group_id=? AND student_id=?")){
+            p.setInt(1,gid);p.setString(2,id);p.executeUpdate();
+        }
+        response(ex,200,"OK|You left the group.");
+    }
 
     static void teacherMarks(Connection c,HttpExchange ex,String tid)throws Exception{
-        StringBuilder out=new StringBuilder("OK\n");String sql="SELECT sm.mark_id,sm.student_id,s.student_name,sm.subject_code,sm.subject_name,sm.mark,sm.grade,COALESCE(sm.proof_file_path,sm.proof),sm.status FROM subject_marks sm JOIN students s ON s.student_id=sm.student_id WHERE s.class_tutor_id=? AND sm.status='Pending Verification' ORDER BY sm.mark_id";
-        try(PreparedStatement p=c.prepareStatement(sql)){p.setString(1,tid);ResultSet r=p.executeQuery();while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(esc(r.getString(5))).append("|").append(r.getInt(6)).append("|").append(esc(r.getString(7))).append("|").append(esc(r.getString(8))).append("|").append(esc(r.getString(9))).append("\n");}response(ex,200,out.toString());
+        StringBuilder out=new StringBuilder("OK\n");
+        String sql="SELECT sm.mark_id,sm.student_id,s.student_name,sm.subject_code,sm.subject_name,sm.mark,sm.grade,COALESCE(sm.proof_file_path,sm.proof),sm.status FROM subject_marks sm JOIN students s ON s.student_id=sm.student_id WHERE s.class_tutor_id=? AND sm.status='Pending Verification' ORDER BY sm.mark_id";
+        try(PreparedStatement p=c.prepareStatement(sql)){
+            p.setString(1,tid);
+            ResultSet r=p.executeQuery();
+            while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(esc(r.getString(5))).append("|").append(r.getInt(6)).append("|").append(esc(r.getString(7))).append("|").append(esc(r.getString(8))).append("|").append(esc(r.getString(9))).append("\n");
+        }
+        response(ex,200,out.toString());
     }
 
     static void teacherVerify(Connection c, HttpExchange ex, String tid, Map<String,String> d) throws Exception {
 
-    int markId = num(d.get("markId"));
-    String decision = trim(d.get("decision"));
+        int markId = num(d.get("markId"));
+        String decision = trim(d.get("decision"));
 
-    if (markId <= 0 ||
-        (!"verify".equals(decision) && !"reject".equals(decision))) {
+        if (markId <= 0 ||
+            (!"verify".equals(decision) && !"reject".equals(decision))) {
 
-        response(ex, 400, "ERROR|Invalid verification request.");
-        return;
-    }
-
-    String sid = null;
-
-    // Make sure this mark belongs to a student whose class tutor
-    // is the currently logged-in teacher.
-    try (PreparedStatement q = c.prepareStatement(
-            "SELECT sm.student_id " +
-            "FROM subject_marks sm " +
-            "JOIN students s ON s.student_id=sm.student_id " +
-            "WHERE sm.mark_id=? " +
-            "AND s.class_tutor_id=? " +
-            "AND sm.status='Pending Verification'")) {
-
-        q.setInt(1, markId);
-        q.setString(2, tid);
-
-        try (ResultSet r = q.executeQuery()) {
-
-            if (!r.next()) {
-                response(ex, 403,
-                        "ERROR|Mark not found or not assigned to this teacher.");
-                return;
-            }
-
-            sid = r.getString("student_id");
+            response(ex, 400, "ERROR|Invalid verification request.");
+            return;
         }
-    }
 
-    String status =
-            "verify".equals(decision)
-                    ? "Verified"
-                    : "Rejected";
+        String sid = null;
 
-    // Update the mark status
-    try (PreparedStatement p = c.prepareStatement(
-            "UPDATE subject_marks SET status=? WHERE mark_id=?")) {
-
-        p.setString(1, status);
-        p.setInt(2, markId);
-        p.executeUpdate();
-    }
-
-    if ("Verified".equals(status)) {
-
-        String code = null;
-        String gradeValue = null;
-
-        // Get the subject and grade of the verified mark
+        // Make sure this mark belongs to a student whose class tutor
+        // is the currently logged-in teacher.
         try (PreparedStatement q = c.prepareStatement(
-                "SELECT subject_code, grade " +
-                "FROM subject_marks " +
-                "WHERE mark_id=?")) {
+                "SELECT sm.student_id " +
+                "FROM subject_marks sm " +
+                "JOIN students s ON s.student_id=sm.student_id " +
+                "WHERE sm.mark_id=? " +
+                "AND s.class_tutor_id=? " +
+                "AND sm.status='Pending Verification'")) {
 
             q.setInt(1, markId);
+            q.setString(2, tid);
 
             try (ResultSet r = q.executeQuery()) {
 
                 if (!r.next()) {
-                    response(ex, 500,
-                            "ERROR|Verified mark could not be found.");
+                    response(ex, 403,
+                            "ERROR|Mark not found or not assigned to this teacher.");
                     return;
                 }
 
-                code = r.getString("subject_code");
-                gradeValue = r.getString("grade");
+                sid = r.getString("student_id");
             }
         }
 
-        // Automatically find/create the correct group
-        String assignedGroup =
-                ensureGroup(c, sid, code, gradeValue);
+        String status =
+                "verify".equals(decision)
+                        ? "Verified"
+                        : "Rejected";
 
-        // Verify that the student was actually added
-        int groupId =
-                findStudentGroup(c, sid, code, gradeValue);
+        // Update the mark status
+        // FIX: removed the stray response() line and the extra closing brace here
+        try (PreparedStatement p = c.prepareStatement(
+                "UPDATE subject_marks SET status=? WHERE mark_id=?")) {
 
-        if (groupId <= 0) {
-            response(ex, 500,
-                    "ERROR|Mark verified, but group assignment failed.");
-            return;
+            p.setString(1, status);
+            p.setInt(2, markId);
+            p.executeUpdate();
         }
 
-        notify(
-                c,
-                sid,
-                "Your mark has been verified. You were assigned to " +
-                assignedGroup + "."
-        );
+        if ("Verified".equals(status)) {
 
-        response(
-                ex,
-                200,
-                "OK|Mark verified. Student assigned to " +
-                assignedGroup + "."
-        );
+            String code = null;
+            String gradeValue = null;
 
-    } else {
+            // Get the subject and grade of the verified mark
+            try (PreparedStatement q = c.prepareStatement(
+                    "SELECT subject_code, grade " +
+                    "FROM subject_marks " +
+                    "WHERE mark_id=?")) {
 
-        notify(
-                c,
-                sid,
-                "Your mark was rejected by the class tutor. Please contact the tutor."
-        );
+                q.setInt(1, markId);
 
-        response(
-                ex,
-                200,
-                "OK|Mark rejected."
-        );
+                try (ResultSet r = q.executeQuery()) {
+
+                    if (!r.next()) {
+                        response(ex, 500,
+                                "ERROR|Verified mark could not be found.");
+                        return;
+                    }
+
+                    code = r.getString("subject_code");
+                    gradeValue = r.getString("grade");
+                }
+            }
+
+            // Automatically find/create the correct group
+            String assignedGroup =
+                    ensureGroup(c, sid, code, gradeValue);
+
+            // Verify that the student was actually added
+            int groupId =
+                    findStudentGroup(c, sid, code, gradeValue);
+
+            if (groupId <= 0) {
+                response(ex, 500,
+                        "ERROR|Mark verified, but group assignment failed.");
+                return;
+            }
+
+            notify(
+                    c,
+                    sid,
+                    "Your mark has been verified. You were assigned to " +
+                    assignedGroup + "."
+            );
+
+            response(
+                    ex,
+                    200,
+                    "OK|Mark verified. Student assigned to " +
+                    assignedGroup + "."
+            );
+
+        } else {
+
+            notify(
+                    c,
+                    sid,
+                    "Your mark was rejected by the class tutor. Please contact the tutor."
+            );
+
+            response(
+                    ex,
+                    200,
+                    "OK|Mark rejected."
+            );
+        }
     }
-}
 
     static void teacherReports(Connection c,HttpExchange ex,String tid)throws Exception{
-        StringBuilder out=new StringBuilder("OK\n");String sql="SELECT r.report_id,r.reporter_id,COALESCE(a.student_name,''),r.reported_id,COALESCE(b.student_name,''),r.reason,r.status,b.warnings FROM reports_data r JOIN students a ON a.student_id=r.reporter_id JOIN students b ON b.student_id=r.reported_id WHERE a.class_tutor_id=? OR b.class_tutor_id=? ORDER BY r.report_id DESC";
-        try(PreparedStatement p=c.prepareStatement(sql)){p.setString(1,tid);p.setString(2,tid);ResultSet r=p.executeQuery();while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(esc(r.getString(5))).append("|").append(esc(r.getString(6))).append("|").append(esc(r.getString(7))).append("|").append(r.getInt(8)).append("\n");}response(ex,200,out.toString());
+        StringBuilder out=new StringBuilder("OK\n");
+        String sql="SELECT r.report_id,r.reporter_id,COALESCE(a.student_name,''),r.reported_id,COALESCE(b.student_name,''),r.reason,r.status,b.warnings FROM reports_data r JOIN students a ON a.student_id=r.reporter_id JOIN students b ON b.student_id=r.reported_id WHERE a.class_tutor_id=? OR b.class_tutor_id=? ORDER BY r.report_id DESC";
+        try(PreparedStatement p=c.prepareStatement(sql)){
+            p.setString(1,tid);p.setString(2,tid);
+            ResultSet r=p.executeQuery();
+            while(r.next())out.append(r.getInt(1)).append("|").append(esc(r.getString(2))).append("|").append(esc(r.getString(3))).append("|").append(esc(r.getString(4))).append("|").append(esc(r.getString(5))).append("|").append(esc(r.getString(6))).append("|").append(esc(r.getString(7))).append("|").append(r.getInt(8)).append("\n");
+        }
+        response(ex,200,out.toString());
     }
 
     static void teacherReportAction(Connection c,HttpExchange ex,String tid,Map<String,String>d)throws Exception{
-        int rid=num(d.get("reportId"));String decision=trim(d.get("decision"));if(rid<=0||(!"valid".equals(decision)&&!"invalid".equals(decision))){response(ex,400,"ERROR|Invalid report decision.");return;}
-        String reported=null;try(PreparedStatement q=c.prepareStatement("SELECT r.reported_id FROM reports_data r JOIN students b ON b.student_id=r.reported_id WHERE r.report_id=? AND (b.class_tutor_id=? OR EXISTS(SELECT 1 FROM students a WHERE a.student_id=r.reporter_id AND a.class_tutor_id=?)) AND r.status='Pending'")){q.setInt(1,rid);q.setString(2,tid);q.setString(3,tid);ResultSet r=q.executeQuery();if(!r.next()){response(ex,403,"ERROR|Report not found or already reviewed.");return;}reported=r.getString(1);}
-        String status="valid".equals(decision)?"Valid":"Invalid";try(PreparedStatement p=c.prepareStatement("UPDATE reports_data SET status=? WHERE report_id=?")){p.setString(1,status);p.setInt(2,rid);p.executeUpdate();}
-        if("Valid".equals(status)){int warnings=0;try(PreparedStatement q=c.prepareStatement("UPDATE students SET warnings=warnings+1, account_status=CASE WHEN warnings+1>=3 THEN 'DELETED' ELSE account_status END WHERE student_id=?")){q.setString(1,reported);q.executeUpdate();}try(PreparedStatement q=c.prepareStatement("SELECT warnings FROM students WHERE student_id=?")){q.setString(1,reported);ResultSet r=q.executeQuery();if(r.next())warnings=r.getInt(1);}notify(c,reported,"A report against your account was reviewed as valid. Warning "+warnings+" of 3.");if(warnings>=3)notify(c,reported,"Your account has been deactivated after 3 valid reports.");}
+        int rid=num(d.get("reportId"));String decision=trim(d.get("decision"));
+        if(rid<=0||(!"valid".equals(decision)&&!"invalid".equals(decision))){response(ex,400,"ERROR|Invalid report decision.");return;}
+        String reported=null;
+        try(PreparedStatement q=c.prepareStatement("SELECT r.reported_id FROM reports_data r JOIN students b ON b.student_id=r.reported_id WHERE r.report_id=? AND (b.class_tutor_id=? OR EXISTS(SELECT 1 FROM students a WHERE a.student_id=r.reporter_id AND a.class_tutor_id=?)) AND r.status='Pending'")){
+            q.setInt(1,rid);q.setString(2,tid);q.setString(3,tid);
+            ResultSet r=q.executeQuery();
+            if(!r.next()){response(ex,403,"ERROR|Report not found or already reviewed.");return;}
+            reported=r.getString(1);
+        }
+        String status="valid".equals(decision)?"Valid":"Invalid";
+        try(PreparedStatement p=c.prepareStatement("UPDATE reports_data SET status=? WHERE report_id=?")){p.setString(1,status);p.setInt(2,rid);p.executeUpdate();}
+        if("Valid".equals(status)){
+            int warnings=0;
+            // FIX: MySQL applies warnings=warnings+1 first, so the CASE must check warnings>=3 (not warnings+1>=3)
+            try(PreparedStatement q=c.prepareStatement("UPDATE students SET warnings=warnings+1, account_status=CASE WHEN warnings>=3 THEN 'DELETED' ELSE account_status END WHERE student_id=?")){
+                q.setString(1,reported);q.executeUpdate();
+            }
+            try(PreparedStatement q=c.prepareStatement("SELECT warnings FROM students WHERE student_id=?")){
+                q.setString(1,reported);
+                ResultSet r=q.executeQuery();
+                if(r.next())warnings=r.getInt(1);
+            }
+            notify(c,reported,"A report against your account was reviewed as valid. Warning "+warnings+" of 3.");
+            if(warnings>=3)notify(c,reported,"Your account has been deactivated after 3 valid reports.");
+        }
         response(ex,200,"OK|Report marked "+status.toLowerCase()+".");
     }
 
-    static String ensureGroup(Connection c, String sid, String code, String grade) throws Exception {
+    static String ensureGroup(Connection c, String sid, String code, String grade) throws SQLException {
 
-    // S-grade students go into the Super Group
-    if ("S".equalsIgnoreCase(grade)) {
+        // S-grade students go into the Super Group
+        if ("S".equalsIgnoreCase(grade)) {
 
-        String name = subjectName(code) + " Super Group";
+            String name = subjectName(code) + " Super Group";
 
-        int gid = findGroupIdByName(c, name);
+            int gid = 0;
+            try (PreparedStatement q=c.prepareStatement("SELECT group_id FROM study_groups WHERE subject_code=? AND grade='S' ORDER BY group_id LIMIT 1")) {
+                q.setString(1,code);
+                try (ResultSet r=q.executeQuery()) { if(r.next()) gid=r.getInt(1); }
+            }
 
-        if (gid <= 0) {
-            try (PreparedStatement p=c.prepareStatement("INSERT INTO study_groups(group_name,subject_code,subject_name,grade) VALUES(?,?,?,?)",Statement.RETURN_GENERATED_KEYS)) {
+            if (gid <= 0) {
+                try (PreparedStatement p=c.prepareStatement("INSERT INTO study_groups(group_name,subject_code,subject_name,grade) VALUES(?,?,?,?)",Statement.RETURN_GENERATED_KEYS)) {
 
-                p.setString(1,name);
-                p.setString(2,code);
-                p.setString(3,subjectName(code));
-                p.setString(4,grade);
+                    p.setString(1,name);
+                    p.setString(2,code);
+                    p.setString(3,subjectName(code));
+                    p.setString(4,grade);
 
-                p.executeUpdate();     
+                    p.executeUpdate();
 
-                try (ResultSet r = p.getGeneratedKeys()) {
-                    if (r.next()) {
-                        gid = r.getInt(1);
+                    try (ResultSet r = p.getGeneratedKeys()) {
+                        if (r.next()) {
+                            gid = r.getInt(1);
+                        }
+                    }
+                }
+            }
+
+            addMember(c, gid, sid);
+
+            return name;
+        }
+
+        // For normal grades, first look for an existing group
+        // with fewer than 10 members.
+        String sql =
+                "SELECT g.group_id, g.group_name, " +
+                "(SELECT COUNT(*) FROM group_members gm2 " +
+                " WHERE gm2.group_id=g.group_id) AS member_count " +
+                "FROM study_groups g " +
+                "WHERE g.subject_code=? AND g.grade=? " +
+                "ORDER BY g.group_id";
+
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+
+            p.setString(1, code);
+            p.setString(2, grade);
+
+            try (ResultSet r = p.executeQuery()) {
+
+                while (r.next()) {
+
+                    int gid = r.getInt("group_id");
+                    String groupName = r.getString("group_name");
+                    int members = r.getInt("member_count");
+
+                    // Existing group has space
+                    if (members < 10) {
+
+                        addMember(c, gid, sid);
+
+                        return groupName;
                     }
                 }
             }
         }
 
+        // No suitable group exists, so create a new one.
+        String name =
+                subjectName(code) + " " + grade +
+                " Group " + System.currentTimeMillis();
+
+        int gid;
+
+        try (PreparedStatement p = c.prepareStatement(
+                "INSERT INTO study_groups(group_name,subject_code,subject_name,grade) VALUES(?,?,?,?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+
+            p.setString(1, name);
+            p.setString(2, code);
+            p.setString(3, subjectName(code));
+            p.setString(4, grade);
+
+            p.executeUpdate();
+
+            try (ResultSet r = p.getGeneratedKeys()) {
+
+                if (!r.next()) {
+                    throw new SQLException("Could not create study group.");
+                }
+
+                gid = r.getInt(1);
+            }
+        }
+
+        // Add student to the newly created group
         addMember(c, gid, sid);
 
         return name;
     }
-
-    // For normal grades, first look for an existing group
-    // with fewer than 10 members.
-    String sql =
-            "SELECT g.group_id, g.group_name, " +
-            "(SELECT COUNT(*) FROM group_members gm2 " +
-            " WHERE gm2.group_id=g.group_id) AS member_count " +
-            "FROM study_groups g " +
-            "WHERE g.subject_code=? AND g.grade=? " +
-            "ORDER BY g.group_id";
-
-    try (PreparedStatement p = c.prepareStatement(sql)) {
-
-        p.setString(1, code);
-        p.setString(2, grade);
-
-        try (ResultSet r = p.executeQuery()) {
-
-            while (r.next()) {
-
-                int gid = r.getInt("group_id");
-                String groupName = r.getString("group_name");
-                int members = r.getInt("member_count");
-
-                // Existing group has space
-                if (members < 10) {
-
-                    addMember(c, gid, sid);
-
-                    return groupName;
-                }
-            }
-        }
-    }
-
-    // No suitable group exists, so create a new one.
-    String name =
-            subjectName(code) + " " + grade +
-            " Group " + System.currentTimeMillis();
-
-    int gid;
-
-    try (PreparedStatement p = c.prepareStatement(
-            "INSERT INTO study_groups(group_name,subject_code,subject_name,grade) VALUES(?,?,?,?)",
-            Statement.RETURN_GENERATED_KEYS)) {
-
-        p.setString(1, name);
-        p.setString(2, code);
-        p.setString(3, subjectName(code));
-        p.setString(4, grade);
-
-        p.executeUpdate();
-
-        try (ResultSet r = p.getGeneratedKeys()) {
-
-            if (!r.next()) {
-                throw new SQLException("Could not create study group.");
-            }
-
-            gid = r.getInt(1);
-        }
-    }
-
-    // Add student to the newly created group
-    addMember(c, gid, sid);
-
-    return name;
-}
 
     static class MultipartData {
         Map<String,String> fields = new HashMap<>();
@@ -906,28 +1060,62 @@ public class StudyHelper {
 
     static boolean studentExists(Connection c,String id)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT 1 FROM students WHERE student_id=? AND account_status='ACTIVE'")){p.setString(1,id);return p.executeQuery().next();}}
     static boolean teacherExists(Connection c,String id)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT 1 FROM teachers WHERE teacher_id=? AND verified=TRUE")){p.setString(1,id);return p.executeQuery().next();}}
-    static boolean member(Connection c,int gid,String sid)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT 1 FROM group_members WHERE group_id=? AND student_id=?")){p.setInt(1,gid);p.setString(2,sid);return p.executeQuery().next();}}
+    static boolean member(Connection c,int gid,String sid)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT 1 FROM group_members WHERE group_id=? AND student_id=?")){p.setInt(1,gid);p.setString(2,sid);try(ResultSet r=p.executeQuery()){return r.next();}}}
+
+    static boolean canAccessGroupChat(Connection c,int gid,String sid)throws SQLException{
+        if(member(c,gid,sid))return true;
+        String sql="SELECT 1 FROM tutor_requests tr JOIN study_groups g ON g.group_name=tr.group_name "
+                +"WHERE g.group_id=? AND tr.tutor_id=? AND tr.status LIKE 'Accepted%' LIMIT 1";
+        try(PreparedStatement p=c.prepareStatement(sql)){p.setInt(1,gid);p.setString(2,sid);try(ResultSet r=p.executeQuery()){return r.next();}}
+    }
+
+    static void backfillVerifiedGroups(Connection c)throws SQLException{
+        List<String[]> rows=new ArrayList<>();
+        String sql="SELECT sm.student_id,sm.subject_code,sm.grade FROM subject_marks sm "
+                +"JOIN students s ON s.student_id=sm.student_id "
+                +"WHERE UPPER(TRIM(sm.status))='VERIFIED' AND UPPER(TRIM(s.account_status))='ACTIVE' "
+                +"AND sm.subject_code IN ('GAMAT301','GAEST305') "
+                +"AND NOT EXISTS (SELECT 1 FROM subject_marks newer WHERE newer.student_id=sm.student_id "
+                +"AND newer.subject_code=sm.subject_code AND newer.mark_id>sm.mark_id "
+                +"AND UPPER(TRIM(newer.status))='VERIFIED')";
+        try(PreparedStatement p=c.prepareStatement(sql);ResultSet r=p.executeQuery()){
+            while(r.next())rows.add(new String[]{r.getString(1),r.getString(2),r.getString(3)});
+        }
+        for(String[] row:rows){
+            if(!blank(row[0])&&!blank(row[1])&&!blank(row[2]))ensureGroup(c,row[0],row[1],row[2]);
+        }
+    }
+
     static void addMember(Connection c, int gid, String sid) throws SQLException {
-    if (member(c, gid, sid)) {
-        return;
+        if (member(c, gid, sid)) {
+            return;
+        }
+
+        String sql = "INSERT INTO group_members(group_id, student_id) VALUES(?, ?)";
+
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, gid);
+            p.setString(2, sid);
+            p.executeUpdate();
+        }
+
+        if (!member(c, gid, sid)) {
+            throw new SQLException("Student was not added to group_members.");
+        }
     }
 
-    String sql = "INSERT INTO group_members(group_id, student_id) VALUES(?, ?)";
-
-    try (PreparedStatement p = c.prepareStatement(sql)) {
-        p.setInt(1, gid);
-        p.setString(2, sid);
-        p.executeUpdate();
-    }
-
-    if (!member(c, gid, sid)) {
-        throw new SQLException("Student was not added to group_members.");
-    }
-}
     static String groupName(Connection c,int gid)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT group_name FROM study_groups WHERE group_id=?")){p.setInt(1,gid);ResultSet r=p.executeQuery();return r.next()?r.getString(1):"";}}
     static int findGroupIdByName(Connection c,String name)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT group_id FROM study_groups WHERE group_name=?")){p.setString(1,name);ResultSet r=p.executeQuery();return r.next()?r.getInt(1):0;}}
-    static int findStudentGroup(Connection c,String sid,String code,String grade)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT g.group_id FROM study_groups g JOIN group_members gm ON gm.group_id=g.group_id WHERE gm.student_id=? AND g.subject_code=? AND g.grade=? LIMIT 1")){p.setString(1,sid);p.setString(2,code);p.setString(3,grade);ResultSet r=p.executeQuery();return r.next()?r.getInt(1):0;}}
-    static boolean isTutorForSubject(Connection c,String sid,String code)throws SQLException{String sql="SELECT 1 FROM subject_marks WHERE student_id=? AND subject_code=? AND grade='S' AND status='Verified' LIMIT 1";try(PreparedStatement p=c.prepareStatement(sql)){p.setString(1,sid);p.setString(2,code);return p.executeQuery().next();}}
+    static int findStudentGroup(Connection c,String sid,String code,String grade)throws SQLException{try(PreparedStatement p=c.prepareStatement("SELECT g.group_id FROM study_groups g JOIN group_members gm ON gm.group_id=g.group_id WHERE gm.student_id=? AND g.subject_code=? AND g.grade=? LIMIT 1")){p.setString(1,sid);p.setString(2,code);p.setString(3,grade);try(ResultSet r=p.executeQuery()){return r.next()?r.getInt(1):0;}}}
+    static boolean isTutorForSubject(Connection c,String sid,String code)throws SQLException{
+        String sql="SELECT 1 FROM students s JOIN subject_marks sm ON sm.student_id=s.student_id "
+                +"WHERE s.student_id=? AND UPPER(TRIM(s.account_status))='ACTIVE' AND sm.subject_code=? "
+                +"AND sm.grade='S' AND UPPER(TRIM(sm.status))='VERIFIED' "
+                +"AND NOT EXISTS (SELECT 1 FROM subject_marks newer WHERE newer.student_id=sm.student_id "
+                +"AND newer.subject_code=sm.subject_code AND newer.mark_id>sm.mark_id "
+                +"AND UPPER(TRIM(newer.status))='VERIFIED') LIMIT 1";
+        try(PreparedStatement p=c.prepareStatement(sql)){p.setString(1,sid);p.setString(2,code);try(ResultSet r=p.executeQuery()){return r.next();}}
+    }
     static boolean shareAnyGroup(Connection c,String a,String b)throws SQLException{String sql="SELECT 1 FROM group_members x JOIN group_members y ON x.group_id=y.group_id WHERE x.student_id=? AND y.student_id=? LIMIT 1";try(PreparedStatement p=c.prepareStatement(sql)){p.setString(1,a);p.setString(2,b);return p.executeQuery().next();}}
     static void notify(Connection c,String sid,String msg)throws SQLException{try(PreparedStatement p=c.prepareStatement("INSERT INTO notifications(student_id,message,notification_time) VALUES(?,?,?)")){p.setString(1,sid);p.setString(2,msg);p.setString(3,now());p.executeUpdate();}}
 
@@ -944,8 +1132,26 @@ public class StudyHelper {
     static Map<String,String> form(HttpExchange ex){return parse(ex,"POST");}
     static Map<String,String> query(HttpExchange ex){return parse(ex,"GET");}
     static Map<String,String> parse(HttpExchange ex,String type){
-        String body="";try{body="GET".equals(type)?ex.getRequestURI().getRawQuery():new String(ex.getRequestBody().readAllBytes(),StandardCharsets.UTF_8);}catch(Exception ignored){}
-        Map<String,String> m=new HashMap<>();if(body==null)return m;for(String pair:body.split("&")){if(pair.isEmpty())continue;String[] x=pair.split("=",2);String k=URLDecoder.decode(x[0],StandardCharsets.UTF_8);String v=x.length>1?URLDecoder.decode(x[1],StandardCharsets.UTF_8):"";m.put(k,v);}return m;
+        String body="";
+        try{body="GET".equals(type)?ex.getRequestURI().getRawQuery():new String(ex.getRequestBody().readAllBytes(),StandardCharsets.UTF_8);}catch(Exception ignored){}
+        Map<String,String> m=new HashMap<>();
+        if(body==null)return m;
+        for(String pair:body.split("&")){
+            if(pair.isEmpty())continue;
+            String[] x=pair.split("=",2);
+            String k=URLDecoder.decode(x[0],StandardCharsets.UTF_8);
+            String v=x.length>1?URLDecoder.decode(x[1],StandardCharsets.UTF_8):"";
+            m.put(k,v);
+        }
+        return m;
     }
-    static void response(HttpExchange ex,int status,String text){try{byte[] b=text.getBytes(StandardCharsets.UTF_8);ex.getResponseHeaders().set("Content-Type","text/plain; charset=UTF-8");ex.getResponseHeaders().set("Cache-Control","no-store");ex.sendResponseHeaders(status,b.length);try(OutputStream o=ex.getResponseBody()){o.write(b);}}catch(Exception ignored){}}
+    static void response(HttpExchange ex,int status,String text){
+        try{
+            byte[] b=text.getBytes(StandardCharsets.UTF_8);
+            ex.getResponseHeaders().set("Content-Type","text/plain; charset=UTF-8");
+            ex.getResponseHeaders().set("Cache-Control","no-store");
+            ex.sendResponseHeaders(status,b.length);
+            try(OutputStream o=ex.getResponseBody()){o.write(b);}
+        }catch(Exception ignored){}
+    }
 }
